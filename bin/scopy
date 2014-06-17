@@ -1,0 +1,27 @@
+#!/bin/sh
+
+bright="$(echo -e '\e[1m')"
+normal="$(echo -e '\e[0m')"
+
+from="${1}"
+to="${2}"
+
+usage() {
+    echo "Usage: $0 <src> <dest>" >&2
+    exit 1
+}
+
+if [ $# -ne 2 ]; then
+    echo "wrong number of arguments" >&2
+    usage
+fi
+
+[ -z "${from}" -o -z "${to}" ] && usage
+
+[ ! "${from/*\///}" = "/" ] && from="${from}/"
+[ ! "${to/*\///}" = "/" ] && to="${to}/"
+
+echo "Syncing ${bright}${from}${normal} -> ${bright}${to}${normal}"
+exec rsync --verbose --recursive --links --hard-links \
+    --perms --owner --group --delete --delete-after --numeric-ids \
+    --force --exclude=.svn "${from}" "${to}"

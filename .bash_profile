@@ -36,6 +36,8 @@ declare -A colors=(
     ["yellowb"]="\033[01;33m"
     ["blue"]="\033[34m"
     ["blueb"]="\033[01;34m"
+    ["white"]="\033[37m"
+    ["whiteb"]="\033[01;37m"
     ["reset"]="\033[00m"
 )
 
@@ -64,7 +66,7 @@ parse_git_repo() {
 prompt_command() {
     PS1="$(pc greenb)\u@\h$(pc blueb) \w$(pc reset)$(parse_git_repo) $(pc blueb)\$$(pc reset) "
     if [ -n "${VIRTUAL_ENV}" ]; then
-        PS1="$(pc yellow)($(basename "${VIRTUAL_ENV}"))$(pc reset) ${PS1}"
+        PS1="$(pc whiteb)($(basename "${VIRTUAL_ENV}"))$(pc reset) ${PS1}"
     fi
 }
 PROMPT_COMMAND=prompt_command
