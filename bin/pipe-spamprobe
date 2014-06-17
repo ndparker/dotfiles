@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+tac - | tee >(echo "X-Spamprobe: $(tac - | spamprobe -M score)") | tac
