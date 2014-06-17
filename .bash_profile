@@ -30,21 +30,20 @@ alias up='./up.sh'
 
 
 declare -A colors=(
-    ["cyan"]="\033[36m"
-    ["red"]="\033[31m"
-    ["green"]="\033[32m"
-    ["greenb"]="\033[01;32m"
-    ["yellow"]="\033[33m"
-    ["yellowb"]="\033[01;33m"
-    ["blue"]="\033[34m"
-    ["blueb"]="\033[01;34m"
-    ["white"]="\033[37m"
-    ["whiteb"]="\033[01;37m"
-    ["reset"]="\033[00m"
+    ["cyan"]="36"
+    ["red"]="31"
+    ["green"]="32"
+    ["yellow"]="33"
+    ["blue"]="34"
+    ["white"]="37"
+    ["reset"]="00"
 )
 
 pc() {
-    echo "\[${colors["$1"]}\]"
+    local bold=
+    [ "${2}" = bold ] && bold="01;"
+
+    echo "\[\033[${bold}${colors["$1"]}m\]"
 }
 
 parse_git_repo() {
@@ -66,9 +65,9 @@ parse_git_repo() {
 }
 
 prompt_command() {
-    PS1="$(pc greenb)\u@\h$(pc blueb) \w$(pc reset)$(parse_git_repo) $(pc blueb)\$$(pc reset) "
+    PS1="$(pc green bold)\u@\h$(pc blue bold) \w$(pc reset)$(parse_git_repo) $(pc blue bold)\$$(pc reset) "
     if [ -n "${VIRTUAL_ENV}" ]; then
-        PS1="$(pc whiteb)($(basename "${VIRTUAL_ENV}"))$(pc reset) ${PS1}"
+        PS1="$(pc white bold)($(basename "${VIRTUAL_ENV}"))$(pc reset) ${PS1}"
     fi
 }
 PROMPT_COMMAND=prompt_command
