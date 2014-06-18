@@ -25,10 +25,6 @@ unset i
 
 umask 022
 
-alias build='./build.sh'
-alias up='./up.sh'
-
-
 declare -A colors=(
     ["red"]="31"
     ["green"]="32"
@@ -47,12 +43,16 @@ pc() {
 }
 
 parse_git_repo() {
-    local repo
-    local stashc="$(git stash list | wc -l)"
-
-    [ "${stashc}" = 0 ] && stashc= || stashc=" [#${stashc}]"
+    local repo stashc
 
     if git rev-parse --git-dir >/dev/null 2>&1; then
+        stashc="$(git stash list 2>/dev/null | wc -l)"
+        if [ ${stashc} = 0 ]; then
+            stashc=
+        else
+            stashc=" [#${stashc}]"
+        fi
+
         repo="$(git branch 2>/dev/null | sed -n '/^\*/s/^\* //p')"
         if git diff --ignore-submodules=dirty --exit-code --quiet 2>/dev/null >&2; then
             if git diff --ignore-submodules=dirty --exit-code --cached --quiet 2>/dev/null >&2; then
@@ -63,8 +63,9 @@ parse_git_repo() {
         else
             repo="$(pc red)"'!'"${repo}$(pc reset)"
         fi
+
+        echo " ${repo}${stashc}"
     fi
-    echo " ${repo}${stashc}"
 }
 
 prompt_command() {
