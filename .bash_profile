@@ -48,6 +48,9 @@ pc() {
 
 parse_git_repo() {
     local repo
+    local stashc="$(git stash list | wc -l)"
+
+    [ "${stashc}" = 0 ] && stashc= || stashc=" [#${stashc}]"
 
     if git rev-parse --git-dir >/dev/null 2>&1; then
         repo="$(git branch 2>/dev/null | sed -n '/^\*/s/^\* //p')"
@@ -61,7 +64,7 @@ parse_git_repo() {
             repo="$(pc red)"'!'"${repo}$(pc reset)"
         fi
     fi
-    echo " ${repo}"
+    echo " ${repo}${stashc}"
 }
 
 prompt_command() {
