@@ -78,6 +78,7 @@ PROMPT_COMMAND=prompt_command
 PROMPT_DIRTRIM=3
 
 alias grb='git fetch && git rebase origin/master'
+alias fab="venvexec.sh ./ fab"
 
 [ -r /usr/bin/virtualenvwrapper.sh ] && . /usr/bin/virtualenvwrapper.sh
 [ -r ~/.bash_profile_private ] && . ~/.bash_profile_private
