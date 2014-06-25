@@ -32,7 +32,7 @@ set modeline
 set colorcolumn=+1
 
 let b:pylintrc = ""
-let b:venv = ""
+let b:venv = $VIRTUAL_ENV
 let s:x = fnamemodify(resolve(expand("%:p")), ":h")
 let s:xl = ""
 while 1
