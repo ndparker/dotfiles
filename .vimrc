@@ -34,31 +34,38 @@ set modeline
 set colorcolumn=+1
 
 " setup syntastic
-let b:pylintrc = ""
-let b:venv = $VIRTUAL_ENV
-let s:x = fnamemodify(resolve(expand("%:p")), ":h")
-let s:xl = ""
-while 1
-    if s:x == s:xl || (b:pylintrc != "" && b:venv != "")
-        break
-    endif
+let s:pylintrc = ""
+let s:venv = $VIRTUAL_ENV
+function s:SetupSyntastic()
+    if s:pylintrc == "" || s:venv == ""
+        let x = fnamemodify(resolve(expand("%:p")), ":h")
+        let xl = ""
+        while 1
+            if x == xl || (s:pylintrc != "" && s:venv != "")
+                break
+            endif
 
-    if b:pylintrc == "" && filereadable(s:x . "/pylintrc")
-        let b:pylintrc = s:x . "/pylintrc"
-    endif
-    if b:venv == "" && s:xl != s:x && fnamemodify(s:x, ":t") == '.virtualenvs'
-        let b:venv = s:xl
-    endif
+            if s:pylintrc == "" && filereadable(x . "/pylintrc")
+                let s:pylintrc = x . "/pylintrc"
+            endif
+            if s:venv == "" && xl != x && fnamemodify(x, ":t") == '.virtualenvs'
+                let s:venv = xl
+            endif
 
-    let s:xl = s:x
-    let s:x = fnamemodify(s:x, ":h")
-endwhile
-if b:pylintrc != ""
-    let g:syntastic_python_pylint_post_args = "--rcfile " . b:pylintrc
-endif
-if b:venv != "" && b:venv != $VIRTUAL_ENV
-    let $PATH = b:venv . '/bin:' . $PATH
-endif
+            let xl = x
+            let x = fnamemodify(x, ":h")
+        endwhile
+
+        if s:pylintrc != ""
+            let g:syntastic_python_pylint_post_args = "--rcfile " . s:pylintrc
+        endif
+
+        if s:venv != "" && s:venv != $VIRTUAL_ENV
+            let $PATH = s:venv . '/bin:' . $PATH
+        endif
+    endif
+endfunction
+autocmd FileType python call s:SetupSyntastic()
 " /setup syntastic
 
 autocmd FileType python setlocal fdc=1
