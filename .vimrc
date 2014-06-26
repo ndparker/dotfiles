@@ -1,3 +1,5 @@
+" #!/usr/bin/vim -nNesc:let&verbose=1|let&viminfo=""|source%|echo""|qall!
+
 set filetype=unknown
 set background=dark
 set confirm
