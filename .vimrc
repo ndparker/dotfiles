@@ -31,6 +31,7 @@ set modeline
 
 set colorcolumn=+1
 
+" setup syntastic
 let b:pylintrc = ""
 let b:venv = $VIRTUAL_ENV
 let s:x = fnamemodify(resolve(expand("%:p")), ":h")
@@ -53,9 +54,10 @@ endwhile
 if b:pylintrc != ""
     let g:syntastic_python_pylint_post_args = "--rcfile " . b:pylintrc
 endif
-if b:venv != ""
+if b:venv != "" && b:venv != $VIRTUAL_ENV
     let $PATH = b:venv . '/bin:' . $PATH
 endif
+" /setup syntastic
 
 autocmd FileType python setlocal fdc=1
 autocmd FileType python setlocal foldmethod=expr
