@@ -64,6 +64,10 @@ function s:SetupSyntastic()
             let $PATH = s:venv . '/bin:' . $PATH
         endif
     endif
+
+    let g:syntastic_always_populate_loc_list = 1
+    let g:syntastic_aggregate_errors = 1
+    let g:syntastic_python_checkers = ['pylint', 'flake8']
 endfunction
 autocmd FileType python call s:SetupSyntastic()
 " /setup syntastic
