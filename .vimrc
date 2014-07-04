@@ -38,6 +38,7 @@ let s:pylintrc = ""
 let s:venv = $VIRTUAL_ENV
 function s:SetupSyntastic()
     if s:pylintrc == "" || s:venv == ""
+        let g:syntastic_python_pylint_post_args = "--msg-template '{path}:{line}: [{msg_id}, {obj}] {msg}'"
         let x = fnamemodify(resolve(expand("%:p")), ":h")
         let xl = ""
         while 1
@@ -57,7 +58,7 @@ function s:SetupSyntastic()
         endwhile
 
         if s:pylintrc != ""
-            let g:syntastic_python_pylint_post_args = "--rcfile " . s:pylintrc
+            let g:syntastic_python_pylint_post_args .= " --rcfile " . s:pylintrc
         endif
 
         if s:venv != "" && s:venv != $VIRTUAL_ENV
