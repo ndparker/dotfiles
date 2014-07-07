@@ -33,6 +33,7 @@ set modeline
 
 set colorcolumn=+1
 
+if !exists("*s:SetupSyntastic")
 " setup syntastic
 let s:pylintrc = ""
 let s:venv = $VIRTUAL_ENV
@@ -71,6 +72,7 @@ function s:SetupSyntastic()
     let g:syntastic_python_checkers = ['pylint', 'flake8']
 endfunction
 autocmd FileType python call s:SetupSyntastic()
+endif
 " /setup syntastic
 
 autocmd FileType python setlocal fdc=1
