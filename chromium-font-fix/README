@@ -1,0 +1,3 @@
+http://superuser.com/questions/726132/chrome-33-shows-ugly-blocky-pixelated-fonts-in-linux
+
+OR just enable 70-no-bitmaps.conf via eselect fontconfig
