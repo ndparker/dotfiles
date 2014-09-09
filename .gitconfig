@@ -4,5 +4,5 @@
 [push]
 	default = simple
 [alias]
-	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --color --abbrev-commit --date=relative
+	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ar [%cr]) %C(bold blue)<%an>%Creset' --color --abbrev-commit
 	st = status
