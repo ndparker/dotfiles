@@ -94,3 +94,7 @@ nmap <F9> :wa<CR>:!venvexec.sh % /usr/bin/env python %<CR>
 
 " <Ctrl-l> redraws the screen and removes any search highlighting.
 nnoremap <silent> <C-l> :nohl<CR><C-l>
+
+" visual mode search
+vnorem // y/<c-r>"<cr>
+vnorem ?? y?<c-r>"<cr>
