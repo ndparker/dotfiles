@@ -87,12 +87,12 @@ PROMPT_DIRTRIM=3
 alias grb='git fetch && git rebase origin/master'
 alias fab="venvexec.sh ./ fab"
 
-BOWERBIN="$(which bower)"
-
+BOWERBIN="$(which bower 2>/dev/null)"
 bower() {
 (
     olddir="$(pwd)"
     while [ ! -f bower.json ]; do
+        [ "$(pwd)" = '/' ] && break
         cd ..
     done
     if [ -f bower.json ]; then
@@ -102,6 +102,26 @@ bower() {
         "${BOWERBIN}" "$@"
     else
         echo "No bower.json found" >&2
+        return 1
+    fi
+)
+}
+
+GRUNTBIN="$(which grunt 2>/dev/null)"
+grunt() {
+(
+    olddir="$(pwd)"
+    while [ ! -f Gruntfile.coffee ]; do
+        [ "$(pwd)" = '/' ] && break
+        cd ..
+    done
+    if [ -f Gruntfile.coffee ]; then
+        if [ "${olddir}" != "$(pwd)" ]; then
+            echo "$(c white bold)>>> $(pwd)$(c reset)" >&2
+        fi
+        "${GRUNTBIN}" "$@"
+    else
+        echo "No Gruntfile.coffee found" >&2
         return 1
     fi
 )
