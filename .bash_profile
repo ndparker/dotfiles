@@ -35,6 +35,13 @@ declare -A colors=(
     ["reset"]="00"
 )
 
+c() {
+    local bold=
+    [ "${2}" = bold ] && bold="01;"
+
+    echo -e "\033[${bold}${colors["$1"]}m"
+}
+
 pc() {
     local bold=
     [ "${2}" = bold ] && bold="01;"
@@ -79,6 +86,26 @@ PROMPT_DIRTRIM=3
 
 alias grb='git fetch && git rebase origin/master'
 alias fab="venvexec.sh ./ fab"
+
+BOWERBIN="$(which bower)"
+
+bower() {
+(
+    olddir="$(pwd)"
+    while [ ! -f bower.json ]; do
+        cd ..
+    done
+    if [ -f bower.json ]; then
+        if [ "${olddir}" != "$(pwd)" ]; then
+            echo "$(c white bold)>>> $(pwd)$(c reset)" >&2
+        fi
+        "${BOWERBIN}" "$@"
+    else
+        echo "No bower.json found" >&2
+        return 1
+    fi
+)
+}
 
 [ -r /usr/bin/virtualenvwrapper.sh ] && . /usr/bin/virtualenvwrapper.sh
 [ -r ~/.bash_profile_private ] && . ~/.bash_profile_private
