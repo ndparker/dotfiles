@@ -119,7 +119,7 @@ grunt() {
         if [ "${olddir}" != "$(pwd)" ]; then
             echo "$(c white bold)>>> $(pwd)$(c reset)" >&2
         fi
-        "${GRUNTBIN}" "$@"
+        venvexec.sh ./ "${GRUNTBIN}" "$@"
     else
         echo "No Gruntfile.coffee found" >&2
         return 1
