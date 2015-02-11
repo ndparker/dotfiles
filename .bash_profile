@@ -85,6 +85,7 @@ PROMPT_COMMAND=prompt_command
 PROMPT_DIRTRIM=3
 
 alias grb='git fetch && git rebase origin/master'
+alias gst='git status'
 alias fab="venvexec.sh ./ fab"
 
 BOWERBIN="$(which bower 2>/dev/null)"
