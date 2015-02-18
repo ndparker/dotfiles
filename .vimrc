@@ -39,7 +39,7 @@ let s:pylintrc = ""
 let s:venv = $VIRTUAL_ENV
 function s:SetupSyntastic()
     if s:pylintrc == "" || s:venv == ""
-        let g:syntastic_python_pylint_post_args = "--msg-template '{path}:{line}:{column}:{C}: [{msg_id} {symbol}, {obj}] {msg}'"
+        let g:syntastic_python_pylint_post_args = "--jobs 2 --msg-template '{path}:{line}:{column}:{C}: [{msg_id} {symbol}, {obj}] {msg}'"
         let x = fnamemodify(resolve(expand("%:p")), ":h")
         let xl = ""
         while 1
