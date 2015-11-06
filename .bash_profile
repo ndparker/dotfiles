@@ -86,6 +86,7 @@ PROMPT_DIRTRIM=3
 
 alias grb='git fetch && git rebase origin/master'
 alias gst='git status'
+alias gc='git branch -r | grep -v HEAD | while read file; do git branch -r -d $file; done && git fetch && git gc --prune=now'
 alias fab="venvexec.sh ./ fab"
 
 BOWERBIN="$(which bower 2>/dev/null)"
