@@ -23,6 +23,8 @@ unset ccache
 unset old_IFS
 unset i
 
+export GPG_TTY=`tty`
+
 umask 022
 
 declare -A colors=(
