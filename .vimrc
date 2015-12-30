@@ -52,7 +52,7 @@ function s:SetupSyntastic()
                 let s:pylintrc = x . "/pylintrc"
             endif
             if s:libdir == "" && filereadable(x . "/.pythonlib")
-                let s:libdir = x . ":"
+                let s:libdir = x
             endif
             if s:venv == "" && xl != x && fnamemodify(x, ":t") == '.virtualenvs'
                 let s:venv = xl
@@ -67,7 +67,11 @@ function s:SetupSyntastic()
         endif
 
         if s:libdir != ""
-            let $PYTHONPATH = s:libdir . $PYTHONPATH
+            if $PYTHONPATH != ""
+                let $PYTHONPATH = s:libdir . ":" . $PYTHONPATH
+            else
+                let $PYTHONPATH = s:libdir
+            endif
         endif
 
         if s:venv != "" && s:venv != $VIRTUAL_ENV
