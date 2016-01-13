@@ -88,7 +88,27 @@ PROMPT_DIRTRIM=3
 
 alias grb='git fetch && git rebase origin/master'
 alias gst='git status'
-alias gc='git branch -r | grep -v HEAD | while read file; do git branch -r -d $file; done && git fetch && git gc --prune=now'
+
+gc() {
+    local x
+
+    git branch -r | grep -v HEAD | while read file; do
+        git branch -r -d $file
+    done && git fetch && git gc --prune=now
+
+    branch="$(git branch 2>/dev/null | sed -n '/^\*/s/^\* //p')"
+
+    for prefix in "$@"; do
+        git branch -r | grep -F "/${prefix}" | cut -d/ -f2- | while read x; do
+            git checkout $x
+        done
+    done
+
+    if [ -n "${branch}" ]; then
+        git checkout "${branch}"
+    fi
+}
+
 alias fab="venvexec.sh ./ fab"
 
 BOWERBIN="$(which bower 2>/dev/null)"
