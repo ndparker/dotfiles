@@ -73,7 +73,11 @@ parse_git_repo() {
             repo="$(pc red)"'!'"${repo}$(pc reset)"
         fi
 
-        echo " ${repo}${stashc}"
+        if git remote -v | grep -qF /dotfiles.git; then
+            echo " {${repo}${stashc}}"
+        else
+            echo " ${repo}${stashc}"
+        fi
     fi
 }
 
