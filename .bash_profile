@@ -92,6 +92,7 @@ PROMPT_DIRTRIM=3
 
 alias grb='git fetch && git rebase origin/master'
 alias gst='git status'
+alias gbr='git branch'
 
 gc() {
     local x
