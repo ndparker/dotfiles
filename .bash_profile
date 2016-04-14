@@ -115,6 +115,7 @@ gc() {
 }
 
 alias fab="venvexec.sh ./ fab"
+alias inv="venvexec.sh ./ inv"
 
 BOWERBIN="$(which bower 2>/dev/null)"
 bower() {
