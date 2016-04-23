@@ -102,6 +102,7 @@ let c_no_comment_fold=1
 
 nmap <F3> :lnext<CR>
 nmap <F5> :wa<CR>:!venvexec.sh % nosetests -vv --with-doctest %<CR>
+nmap <F6> :wa<CR>:!venvexec.sh % py.test -vv --doctest-modules %<CR>
 nmap <f8> :wa<CR>:!venvexec.sh % flake8 %<CR>
 nmap <F9> :wa<CR>:!venvexec.sh % /usr/bin/env python %<CR>
 
