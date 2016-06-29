@@ -112,3 +112,6 @@ nnoremap <silent> <C-l> :nohl<CR><C-l>
 " visual mode search
 vnorem // y/<c-r>"<cr>
 vnorem ?? y?<c-r>"<cr>
+
+" gpg
+let GPGDefaultRecipients = ['8103A37E']
