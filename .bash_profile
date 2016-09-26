@@ -160,3 +160,60 @@ grunt() {
 [ -r /usr/bin/virtualenvwrapper.sh ] && . /usr/bin/virtualenvwrapper.sh
 [ -r ~/.bash_profile_private ] && . ~/.bash_profile_private
 
+declare -A aws_roles
+#declare -A aws_roles=(
+#    ["name"]="role-arn"
+#)
+
+# Put your base credentials (user key and secret) into [user]
+amz() {(
+    set +x
+
+    local arn token role cmd
+
+    token=
+    role=
+    arn="$(
+        aws sts get-caller-identity --profile user --output text \
+        | awk '{sub(":user/", ":mfa/", $2); print $2}'
+    )"
+
+    if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
+        token="${1}"
+        shift
+    fi
+
+    if [ -n "${1}" ]; then
+        role="${1}"
+        shift
+    fi
+
+    if [ -z "${token}" ]; then
+        if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
+            token="${1}"
+            shift
+        else
+            read -p "MFA: " token
+        fi
+    fi
+
+    if [ -n "${role}" ]; then
+        if [ -n "${aws_roles["${role}"]}" ]; then
+            role="${aws_roles["${role}"]}"
+        fi
+
+        cmd=( aws sts assume-role --role-arn "${role}" --role-session-name foo
+              --profile user )
+    else
+        cmd=( aws sts get-session-token --profile user )
+    fi
+
+    "${cmd[@]}" --serial-number "${arn}" --token-code "${token}" --output text \
+    | awk '/^CREDENTIALS/ {print \
+        "aws_access_key_id " $2 \
+        "\naws_secret_access_key " $4 \
+        "\naws_session_token " $5 \
+    }' | while read key value; do
+        aws configure set "${key}" "${value}" --profile default
+    done
+)}
