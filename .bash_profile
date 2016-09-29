@@ -160,9 +160,9 @@ grunt() {
 [ -r /usr/bin/virtualenvwrapper.sh ] && . /usr/bin/virtualenvwrapper.sh
 [ -r ~/.bash_profile_private ] && . ~/.bash_profile_private
 
-declare -A aws_roles
-aws_roles["user"]=
-aws_roles_default="${aws_roles_default:-user}"
+declare -A amz_roles
+amz_roles["user"]=
+amz_roles_default="${amz_roles_default:-user}"
 
 # Put your base credentials (user key and secret) into [user]
 amz() {(
@@ -185,7 +185,7 @@ amz() {(
         role="${1}"
         shift
     else
-        role="${aws_roles_default}"
+        role="${amz_roles_default}"
     fi
 
     # if [ -z "${token}" ]; then
@@ -199,8 +199,8 @@ amz() {(
     # fi
 
     if [ -n "${role}" ]; then
-        if [ -n "${aws_roles["${role}"]+_}" ]; then
-            role="${aws_roles["${role}"]}"
+        if [ -n "${amz_roles["${role}"]+_}" ]; then
+            role="${amz_roles["${role}"]}"
         fi
     fi
 
