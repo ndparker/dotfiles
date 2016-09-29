@@ -161,59 +161,74 @@ grunt() {
 [ -r ~/.bash_profile_private ] && . ~/.bash_profile_private
 
 declare -A aws_roles
-#declare -A aws_roles=(
-#    ["name"]="role-arn"
-#)
+aws_roles["user"]=
+aws_roles_default="${aws_roles_default:-user}"
 
 # Put your base credentials (user key and secret) into [user]
 amz() {(
+    set +e
     set +x
-
-    local arn token role cmd
 
     token=
     role=
     arn="$(
-        aws sts get-caller-identity --profile user --output text \
-        | awk '{sub(":user/", ":mfa/", $2); print $2}'
+        aws sts get-caller-identity --profile user --output text --query 'Arn'
     )"
+    user="${arn##*/}"
 
-    if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
-        token="${1}"
-        shift
-    fi
+    # if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
+    #     token="${1}"
+    #     shift
+    # fi
 
     if [ -n "${1}" ]; then
         role="${1}"
         shift
+    else
+        role="${aws_roles_default}"
     fi
 
-    if [ -z "${token}" ]; then
-        if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
-            token="${1}"
-            shift
-        else
-            read -p "MFA: " token
+    # if [ -z "${token}" ]; then
+    #     if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
+    #         token="${1}"
+    #         shift
+    #     else
+    #         echo -n "MFA: "
+    #         read token
+    #     fi
+    # fi
+
+    if [ -n "${role}" ]; then
+        if [ -n "${aws_roles["${role}"]+_}" ]; then
+            role="${aws_roles["${role}"]}"
         fi
     fi
 
     if [ -n "${role}" ]; then
-        if [ -n "${aws_roles["${role}"]}" ]; then
-            role="${aws_roles["${role}"]}"
-        fi
-
-        cmd=( aws sts assume-role --role-arn "${role}" --role-session-name foo
+        cmd=( aws sts assume-role --role-arn "${role}"
+              --role-session-name "awscli-$(whoami)-$(hostname -f)"
               --profile user )
     else
         cmd=( aws sts get-session-token --profile user )
     fi
 
-    "${cmd[@]}" --serial-number "${arn}" --token-code "${token}" --output text \
-    | awk '/^CREDENTIALS/ {print \
-        "aws_access_key_id " $2 \
-        "\naws_secret_access_key " $4 \
-        "\naws_session_token " $5 \
-    }' | while read key value; do
-        aws configure set "${key}" "${value}" --profile default
-    done
+    if [ -n "${token}" ]; then
+        cmd=( "${cmd[@]}" --serial-number "${arn/:user\//:mfa/}"
+              --token-code "${token}" )
+    fi
+
+    cmd=( "${cmd[@]}"  --output text
+         --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' )
+
+    "${cmd[@]}" | (
+        read key secret session
+        aws configure set default.aws_access_key_id "${key}"
+        aws configure set default.aws_secret_access_key "${secret}"
+        aws configure set default.aws_session_token "${session}"
+    )
+
+    user="$(aws sts get-caller-identity --query 'Arn' --output text)"
+    if [ $? -eq 0 ]; then
+        echo "Your are now: ${user}"
+    fi
 )}
