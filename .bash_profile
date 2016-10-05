@@ -160,8 +160,23 @@ grunt() {
 [ -r /usr/bin/virtualenvwrapper.sh ] && . /usr/bin/virtualenvwrapper.sh
 [ -r ~/.bash_profile_private ] && . ~/.bash_profile_private
 
-declare -A amz_roles
-amz_roles["user"]=
+if [ -n "${ZSH_VERSION}" ]; then
+    typeset -A amz_roles
+    # this should go into a private profile:
+    # amz_roles=(
+    #     short long
+    #     ...
+    # )
+    amz_roles[user]=
+else
+    declare -A amz_roles
+    # this should go into a private profile:
+    # declare -A amz_roles=(
+    #     ["short"]="long"
+    #     ...
+    # )
+    amz_roles["user"]=
+fi
 amz_roles_default="${amz_roles_default:-user}"
 
 # Put your base credentials (user key and secret) into [user]
@@ -199,7 +214,11 @@ amz() {(
     # fi
 
     if [ -n "${role}" ]; then
-        if [ -n "${amz_roles["${role}"]+_}" ]; then
+        if [ -n "${ZSH_VERSION}" ]; then
+            if (( $+aws_roles[$role] )); then
+                role="${aws_roles[$role]}"
+            fi
+        elif [ -n "${amz_roles["${role}"]+_}" ]; then
             role="${amz_roles["${role}"]}"
         fi
     fi
