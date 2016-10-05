@@ -215,8 +215,8 @@ amz() {(
 
     if [ -n "${role}" ]; then
         if [ -n "${ZSH_VERSION}" ]; then
-            if (( $+aws_roles[$role] )); then
-                role="${aws_roles[$role]}"
+            if (( $+amz_roles[$role] )); then
+                role="${amz_roles[$role]}"
             fi
         elif [ -n "${amz_roles["${role}"]+_}" ]; then
             role="${amz_roles["${role}"]}"
