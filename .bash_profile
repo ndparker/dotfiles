@@ -157,7 +157,17 @@ grunt() {
 )
 }
 
-[ -r /usr/bin/virtualenvwrapper.sh ] && . /usr/bin/virtualenvwrapper.sh
+if [ -r /usr/bin/virtualenvwrapper.sh ]; then
+    . /usr/bin/virtualenvwrapper.sh
+
+    alias venv='. "$(venvexec.sh . /bin/sh -c '\''echo "${VIRTUAL_ENV}"'\'')/bin/activate"'
+    eval "$(
+        lsvirtualenv -b | while read file; do \
+            echo "alias ${file}='workon ${file}'"; \
+        done \
+    )"
+fi
+
 [ -r ~/.bash_profile_private ] && . ~/.bash_profile_private
 
 if [ -n "${ZSH_VERSION}" ]; then
