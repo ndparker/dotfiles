@@ -181,9 +181,10 @@ amz_roles_default="${amz_roles_default:-user}"
 
 # Put your base credentials (user key and secret) into [user]
 amz() {(
-    set +e
+    set -e
     set +x
 
+    args="${@}"
     token=
     role=
     arn="$(
@@ -191,10 +192,10 @@ amz() {(
     )"
     user="${arn##*/}"
 
-    # if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
-    #     token="${1}"
-    #     shift
-    # fi
+    if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
+        token="${1}"
+        shift
+    fi
 
     if [ -n "${1}" ]; then
         role="${1}"
@@ -203,15 +204,12 @@ amz() {(
         role="${amz_roles_default}"
     fi
 
-    # if [ -z "${token}" ]; then
-    #     if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
-    #         token="${1}"
-    #         shift
-    #     else
-    #         echo -n "MFA: "
-    #         read token
-    #     fi
-    # fi
+    if [ -z "${token}" ]; then
+        if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
+            token="${1}"
+            shift
+        fi
+    fi
 
     if [ -n "${role}" ]; then
         if [ -n "${ZSH_VERSION}" ]; then
@@ -239,13 +237,29 @@ amz() {(
     cmd=( "${cmd[@]}"  --output text
          --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' )
 
-    "${cmd[@]}" | (
+    set -o pipefail
+    set +e
+
+    tmpfile="$(mktemp)"
+    "${cmd[@]}" 2>"${tmpfile}" | (
         read key secret session
         aws configure set default.aws_access_key_id "${key}"
         aws configure set default.aws_secret_access_key "${secret}"
         aws configure set default.aws_session_token "${session}"
     )
 
+    if [ $? -ne 0 -a -z "${token}" ] && \
+            grep -q 'AccessDenied' -- "${tmpfile}"; then
+        rm -f -- "${tmpfile}"
+        echo -n "MFA: "
+        read token
+        args=( "${token}" "${args[@]}" )
+        amz "${args[@]}"
+        return $?
+    fi
+
+    cat <"${tmpfile}" >&2
+    rm -f -- "${tmpfile}"
     user="$(aws sts get-caller-identity --query 'Arn' --output text)"
     if [ $? -eq 0 ]; then
         echo "Your are now: ${user}"
