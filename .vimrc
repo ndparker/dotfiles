@@ -85,6 +85,7 @@ function s:SetupSyntastic()
 endfunction
 autocmd FileType python call s:SetupSyntastic()
 endif
+let g:syntastic_xml_checkers=['']
 " /setup syntastic
 
 autocmd FileType python setlocal fdc=1
