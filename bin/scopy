@@ -24,4 +24,4 @@ fi
 echo "Syncing ${bright}${from}${normal} -> ${bright}${to}${normal}"
 exec rsync --verbose --recursive --links --hard-links \
     --perms --owner --group --delete --delete-after --numeric-ids \
-    --force --exclude=.svn "${from}" "${to}"
+    --force --exclude=.svn --exclude=.git "${from}" "${to}"
