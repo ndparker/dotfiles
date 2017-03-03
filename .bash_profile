@@ -187,7 +187,15 @@ else
     # )
     amz_roles["user"]=
 fi
+# if set then the content is used as a profile name to inherit from, otherwise
+# assume-role is used directly
+amz_roles_inherit=
+# if 1, force mfa (don't wait for access denied)
+amz_mfa_force=
 amz_roles_default="${amz_roles_default:-user}"
+
+amz_roles_inherit=root
+amz_mfa_force=1
 
 # Put your base credentials (user key and secret) into [user]
 amz() {(
@@ -231,12 +239,17 @@ amz() {(
         fi
     fi
 
-    if [ -n "${role}" ]; then
+    if [ -n "${role}" -a -z "${amz_roles_inherit}" ]; then
         cmd=( aws sts assume-role --role-arn "${role}"
               --role-session-name "awscli-$(whoami)-$(hostname -f)"
               --profile user )
     else
         cmd=( aws sts get-session-token --profile user )
+    fi
+
+    if [ -z "${token}" -a "${amz_mfa_force}" = "1" ]; then
+        echo -n "MFA: "
+        read token
     fi
 
     if [ -n "${token}" ]; then
@@ -250,12 +263,33 @@ amz() {(
     set -o pipefail
     set +e
 
+    target=default
+    if [ -n "${role}" -a -n "${amz_roles_inherit}" ]; then
+        target="${amz_roles_inherit}"
+    fi
+
+    filename=~/.aws/config
+    if [ -e "${filename}" ]; then
+        (
+            pro=
+            while read line; do
+                if [ "${line:0:1}" = "[" ]; then
+                    pro="${line}"
+                fi
+                if [ "${pro}" != "[profile default]" ]; then
+                    echo "${line}"
+                fi
+            done <"${filename}"
+        ) >"${filename}.tmp"
+        mv -- "${filename}.tmp" "${filename}"
+    fi
+
     tmpfile="$(mktemp)"
     "${cmd[@]}" 2>"${tmpfile}" | (
         read key secret session
-        aws configure set default.aws_access_key_id "${key}"
-        aws configure set default.aws_secret_access_key "${secret}"
-        aws configure set default.aws_session_token "${session}"
+        aws configure set --profile "${target}" aws_access_key_id "${key}"
+        aws configure set --profile "${target}" aws_secret_access_key "${secret}"
+        aws configure set --profile "${target}" aws_session_token "${session}"
     )
 
     if [ $? -ne 0 -a -z "${token}" ] && \
@@ -266,6 +300,11 @@ amz() {(
         args=( "${token}" "${args[@]}" )
         amz "${args[@]}"
         return $?
+    fi
+
+    if [ -n "${role}" -a -n "${amz_roles_inherit}" ]; then
+        aws configure set --profile default role_arn "${role}"
+        aws configure set --profile default source_profile "${amz_roles_inherit}"
     fi
 
     cat <"${tmpfile}" >&2
