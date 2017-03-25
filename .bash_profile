@@ -3,6 +3,7 @@
 HISTFILESIZE=100000
 HISTSIZE=100000
 
+alias htype="locate --regex '\\.c$' | shuf | head -1 | xargs pv -q -L 20"
 ccache="/usr/lib/ccache/bin:"
 PATH="~/bin:${PATH}"
 old_IFS="$IFS"; IFS=":"; newpath=
