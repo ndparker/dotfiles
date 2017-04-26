@@ -92,7 +92,7 @@ PROMPT_COMMAND=prompt_command
 PROMPT_DIRTRIM=3
 
 alias grb='git fetch && git rebase origin/master'
-alias gst='git status'
+alias gst='git status -sb'
 alias gbr='git branch'
 
 gc() {
