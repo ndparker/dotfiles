@@ -52,6 +52,12 @@ pc() {
     echo "\[\033[${bold}${colors["$1"]}m\]"
 }
 
+t() {
+    echo -ne "\033]30;"
+    echo -n "${1}"
+    echo -ne "\007"
+}
+
 parse_git_repo() {
     local repo stashc
 
