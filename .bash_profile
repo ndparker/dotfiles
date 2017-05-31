@@ -170,7 +170,7 @@ if [ -r /usr/bin/virtualenvwrapper.sh ]; then
     alias venv='. "$(venvexec.sh . /bin/sh -c '\''echo "${VIRTUAL_ENV}"'\'')/bin/activate"'
     eval "$(
         lsvirtualenv -b | while read file; do \
-            echo "alias ${file}='workon ${file}'"; \
+            echo "alias ${file}='t "${file}" && workon ${file}'"; \
         done \
     )"
 fi
