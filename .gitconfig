@@ -9,3 +9,4 @@
 	diff = diff --minimal
 	please = push --force-with-lease
 	it = !git init && git commit -m “root” --allow-empty
+    uncommit = reset HEAD~
