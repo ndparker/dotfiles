@@ -115,4 +115,4 @@ vnorem // y/<c-r>"<cr>
 vnorem ?? y?<c-r>"<cr>
 
 " gpg
-let GPGDefaultRecipients = ['8103A37E']
+let GPGDefaultRecipients = ['0xCA6939748103A37E']
