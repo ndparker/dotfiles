@@ -3,6 +3,10 @@
 HISTFILESIZE=100000
 HISTSIZE=100000
 
+alias pipefox='firefox "data:text/html;base64,$(base64 -w 0 <&0)"'
+cfox() {
+    curl -- "${1}" | pipefox
+}
 alias htype="locate --regex '\\.c$' | shuf | head -1 | xargs pv -q -L 20"
 ccache="/usr/lib/ccache/bin:"
 PATH="~/bin:${PATH}"
