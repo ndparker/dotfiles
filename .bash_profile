@@ -280,6 +280,9 @@ amz() {(
     fi
 
     filename=~/.aws/config
+    rm -f -- "${filename}.tmp.default"
+    touch "${filename}.tmp.default"
+
     if [ -e "${filename}" ]; then
         (
             pro=
@@ -287,11 +290,25 @@ amz() {(
                 if [ "${line:0:1}" = "[" ]; then
                     pro="${line}"
                 fi
-                if [ "${pro}" != "[profile default]" ]; then
+                if [ "${pro}" = "[profile default]" -o "${pro}" = "[default]" ]; then
+                    if [ "${pro}" != "${line}" ]; then
+                        key="$(echo "${line%%=*}" | awk '{$1=$1};1')"
+                        if [ -n "${key}" -a "${key}" != 'role_arn' -a "${key}" != 'source_profile' ]; then
+                            echo "${line}" >>"${filename}.tmp.default"
+                        fi
+                    fi
+                else
                     echo "${line}"
                 fi
             done <"${filename}"
         ) >"${filename}.tmp"
+
+        if [ -s "${filename}.tmp.default" ]; then
+            echo "[profile default]" >>"${filename}.tmp"
+            cat <"${filename}.tmp.default" >>"${filename}.tmp"
+        fi
+        rm -f -- "${filename}.tmp.default"
+
         mv -- "${filename}.tmp" "${filename}"
     fi
 
