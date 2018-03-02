@@ -104,7 +104,7 @@ PROMPT_DIRTRIM=3
 
 alias grb='git fetch && git rebase origin/master'
 alias gst='git status -sb'
-alias gbr='git branch'
+alias gbr='git --no-pager branch'
 
 gc() {
     local x
