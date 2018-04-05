@@ -221,6 +221,10 @@ amz() {(
         aws sts get-caller-identity --profile user --output text --query 'Arn'
     )"
     user="${arn##*/}"
+    current="$(
+        aws sts get-caller-identity --output text --query 'Arn' \
+        2>/dev/null || true
+    )"
 
     if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
         token="${1}"
@@ -260,16 +264,21 @@ amz() {(
     fi
 
     if [ -z "${token}" -a "${amz_mfa_force}" = "1" ]; then
-        echo -n "MFA: "
-        read token
+        if [ -z "${current}" ]; then
+            echo -n "MFA: "
+            read token
+        fi
     fi
 
     if [ -n "${token}" ]; then
+        # reset current, because it doesn't matter. We have a token, we will
+        # apply it.
+        current=
         cmd=( "${cmd[@]}" --serial-number "${arn/:user\//:mfa/}"
               --token-code "${token}" )
     fi
 
-    cmd=( "${cmd[@]}"  --output text
+    cmd=( "${cmd[@]}" --output text
          --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' )
 
     set -o pipefail
@@ -313,22 +322,25 @@ amz() {(
         mv -- "${filename}.tmp" "${filename}"
     fi
 
-    tmpfile="$(mktemp)"
-    "${cmd[@]}" 2>"${tmpfile}" | (
-        read key secret session
-        aws configure set --profile "${target}" aws_access_key_id "${key}"
-        aws configure set --profile "${target}" aws_secret_access_key "${secret}"
-        aws configure set --profile "${target}" aws_session_token "${session}"
-    )
+    tmpfile=
+    if [ -z "${current}" ]; then
+        tmpfile="$(mktemp)"
+        "${cmd[@]}" 2>"${tmpfile}" | (
+            read key secret session
+            aws configure set --profile "${target}" aws_access_key_id "${key}"
+            aws configure set --profile "${target}" aws_secret_access_key "${secret}"
+            aws configure set --profile "${target}" aws_session_token "${session}"
+        )
 
-    if [ $? -ne 0 -a -z "${token}" ] && \
-            grep -q 'AccessDenied' -- "${tmpfile}"; then
-        rm -f -- "${tmpfile}"
-        echo -n "MFA: "
-        read token
-        args=( "${token}" "${args[@]}" )
-        amz "${args[@]}"
-        return $?
+        if [ $? -ne 0 -a -z "${token}" ] && \
+                grep -q 'AccessDenied' -- "${tmpfile}"; then
+            rm -f -- "${tmpfile}"
+            echo -n "MFA: "
+            read token
+            args=( "${token}" "${args[@]}" )
+            amz "${args[@]}"
+            return $?
+        fi
     fi
 
     if [ -n "${role}" -a -n "${amz_roles_inherit}" ]; then
@@ -336,8 +348,10 @@ amz() {(
         aws configure set --profile default source_profile "${amz_roles_inherit}"
     fi
 
-    cat <"${tmpfile}" >&2
-    rm -f -- "${tmpfile}"
+    if [ -n "${tmpfile}" ]; then
+        cat <"${tmpfile}" >&2
+        rm -f -- "${tmpfile}"
+    fi
     user="$(aws sts get-caller-identity --query 'Arn' --output text)"
     if [ $? -eq 0 ]; then
         echo "Your are now: ${user}"
