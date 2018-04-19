@@ -134,6 +134,7 @@ prepare_config() {(
 # Input: $1 (token), $mfa_force
 # Output: ~/.aws/{config,credentials}
 ############################################################################
+conf=( aws configure set --profile default )
 do_login() {
     local token
     token="${1}"; shift
@@ -158,19 +159,14 @@ do_login() {
           --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' )
 
     tmpfile="$(mktemp)"
-    conf=( aws configure set --profile )
     (
         set +e
         set -o pipefail
         "${cmd[@]}" 2>"${tmpfile}" | (
             read key secret session
-            # "${conf[@]}" "${login_profile}" aws_access_key_id "${key}"
-            # "${conf[@]}" "${login_profile}" aws_secret_access_key "${secret}"
-            # "${conf[@]}" "${login_profile}" aws_session_token "${session}"
-
-            "${conf[@]}" default aws_access_key_id "${key}"
-            "${conf[@]}" default aws_secret_access_key "${secret}"
-            "${conf[@]}" default aws_session_token "${session}"
+            "${conf[@]}" aws_access_key_id "${key}"
+            "${conf[@]}" aws_secret_access_key "${secret}"
+            "${conf[@]}" aws_session_token "${session}"
         )
     )
 
@@ -198,8 +194,8 @@ if [ -z "${iam}" -o -n "${token}" ]; then
 fi
 
 if [ -n "${role}" ]; then
-    aws configure set --profile default role_arn "${role}"
-    aws configure set --profile default source_profile default
+    "${conf[@]}" role_arn "${role}"
+    "${conf[@]}" source_profile default
 fi
 
 user="$(aws sts get-caller-identity --query 'Arn' --output text)"
