@@ -102,6 +102,10 @@ autocmd FileType c setlocal foldlevel=0
 let c_space_errors=1
 let c_no_comment_fold=1
 
+autocmd FileType yaml setlocal fdc=1
+autocmd FileType yaml setlocal foldmethod=indent
+autocmd FileType yaml setlocal foldminlines=0
+
 nmap <F3> :lnext<CR>
 nmap <F5> :wa<CR>:!venvexec.sh % nosetests -vv --with-doctest %<CR>
 nmap <F6> :wa<CR>:!venvexec.sh % py.test -vv --exitfirst --doctest-modules %<CR>
