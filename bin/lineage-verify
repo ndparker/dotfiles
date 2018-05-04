@@ -1,0 +1,35 @@
+#!/bin/sh
+set -e
+
+bin=~/bin
+vdir="${bin}"/.lineage-verify.venv
+
+rebuild=1
+if [ -d "${vdir}/bin" ]; then
+    . "${vdir}/bin/activate" && rebuild= || true
+fi
+if [ -n "${rebuild}" ]; then
+    mkdir -p -- "${vdir}"
+    (
+        cd -- "${vdir}" || exit $?
+        virtualenv --clear --python /usr/bin/python3.6 . || exit $?
+        rm -f .installed
+    ) || exit $?
+    . "${vdir}/bin/activate"
+fi
+
+if [ ! -f "${vdir}/.installed" ]; then
+    pip install \
+        asn1crypto==0.24.0 \
+        cffi==1.11.5 \
+        cryptography==2.1.4 \
+        idna==2.6 \
+        pycparser==2.18 \
+        pyOpenSSL==17.5.0 \
+        six==1.11.0
+    cp -- "${bin}/lineage-verify.py" "${vdir}/lineage-verify.py"
+    chmod 750 -- "${vdir}/lineage-verify.py"
+    touch -- "${vdir}/.installed"
+fi
+
+exec "${vdir}/lineage-verify.py" "$@"
