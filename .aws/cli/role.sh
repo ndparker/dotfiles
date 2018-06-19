@@ -81,7 +81,7 @@ fi
 [ $# -eq 0 ] || usage
 
 if [ -n "${role}" ]; then
-    var="role_${role}"
+    var="role_${role//-/_}"
     if [ "${!var:+x}" = x -o "${var}" = "role_user" ]; then
         role="${!var}"
     fi
