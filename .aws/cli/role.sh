@@ -65,6 +65,7 @@ trap cleanup EXIT
 ############################################################################
 role=
 token=
+role_alias=
 
 [ $# -gt 0 ] || set -- "${default_role}"
 if echo "${1}" | grep -q '^[0-9][0-9][0-9][0-9][0-9][0-9]$'; then
@@ -83,6 +84,7 @@ fi
 if [ -n "${role}" ]; then
     var="role_${role//-/_}"
     if [ "${!var:+x}" = x -o "${var}" = "role_user" ]; then
+        role_alias="${role}"
         role="${!var}"
     fi
 fi
@@ -201,6 +203,15 @@ fi
 user="$(aws sts get-caller-identity --query 'Arn' --output text)"
 if [ $? -eq 0 ]; then
     echo "Your are now: ${user}"
+    if [ "${user/:assumed-role}" != "${user}" ]; then
+        url='https://signin.aws.amazon.com/switchrole?account='
+        url="${url}$( cut -d: -f5 <<<"${user}" )&roleName="
+        url="${url}$( cut -d/ -f2 <<<"${user}" )"
+        if [ -n "${role_alias}" ]; then
+            url="${url}&displayName=${role_alias}"
+        fi
+        echo "${url}"
+    fi
 fi
 
 # vim: nowrap
