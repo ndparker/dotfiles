@@ -208,7 +208,13 @@ if [ $? -eq 0 ]; then
         url="${url}$( cut -d: -f5 <<<"${user}" )&roleName="
         url="${url}$( cut -d/ -f2 <<<"${user}" )"
         if [ -n "${role_alias}" ]; then
-            url="${url}&displayName=${role_alias}"
+            dn="$(tr A-Z a-z <<<"${role_alias}")"
+            if [ ${#dn} -le 3 ]; then
+                dn="$(tr a-z A-Z <<<"${dn}")"
+            else
+                dn="$(tr a-z A-Z <<<"${dn:0:1}")${dn:1}"
+            fi
+            url="${url}&displayName=${dn}"
         fi
         echo "${url}"
     fi
