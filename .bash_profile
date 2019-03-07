@@ -182,3 +182,35 @@ if [ -r /usr/bin/virtualenvwrapper.sh ]; then
 fi
 
 [ -r ~/.bash_profile_private ] && . ~/.bash_profile_private
+
+
+_project() {(
+    py="python${1}"
+    name="${2}"
+    owner="${3}"
+    base="${4}"
+    cd "${base}" || exit 1
+
+    dir="$(pwd)"
+    mkvirtualenv --python "${py}" "${name}"
+    workon "${name}"
+    pip install --upgrade pip
+    cd "$VIRTUAL_ENV"
+    git clone "git@github.com:${owner}/${name}.git" "src/${name}"
+    pdir="$(pwd)"
+    (
+        cd "${dir}"
+        ln -s "${pdir}"
+    )
+    cd "src/${name}"
+    echo 'cd "$VIRTUAL_ENV"/src/'"${name}" >> "$VIRTUAL_ENV"/bin/postactivate
+    pip install -r development.txt
+)}
+
+project2() {
+    _project 2.7 "${1}" "${2:-${default_project_owner}}" "${3:-${default_project_base}}"
+}
+
+project3() {
+    _project 3.6 "${1}" "${2:-${default_project_owner}}" "${3:-${default_project_base}}"
+}
