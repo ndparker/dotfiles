@@ -3,6 +3,7 @@
 HISTFILESIZE=100000
 HISTSIZE=100000
 
+alias g=gvim
 alias backup-config='scopy ~/.config ~/.config.backup/'
 alias pipefox='firefox "data:text/html;base64,$(base64 -w 0 <&0)"'
 cfox() {
