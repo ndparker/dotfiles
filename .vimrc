@@ -111,7 +111,7 @@ nmap <F5> :wa<CR>:!venvexec.sh % nosetests -vv --with-doctest %<CR>
 nmap <F6> :wa<CR>:!venvexec.sh % py.test -vv --exitfirst --doctest-modules %<CR>
 nmap <f8> :wa<CR>:!venvexec.sh % flake8 %<CR>
 nmap <F9> :wa<CR>:!venvexec.sh % /usr/bin/env python %<CR>
-:nnoremap <F10> /\<\d\{1,10}\><CR>ce<C-r>=strftime("%Y%m%d00")<CR><Esc>:echo @"<CR>
+:nnoremap <F10> viwo<Esc>ce<C-r>=strftime("%Y%m%d")<CR><Esc>:echo @"<CR>
 
 " <Ctrl-l> redraws the screen and removes any search highlighting.
 nnoremap <silent> <C-l> :nohl<CR><C-l>
