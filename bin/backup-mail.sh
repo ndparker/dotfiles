@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-pimsettingexporterconsole --template ~/mail.backup/settings-template.xml --export ~/mail.backup/Settings-$(date +%Y-%m-%d).zip
+pimdataexporterconsole --template ~/mail.backup/settings-template.xml --export ~/mail.backup/Settings-$(date +%Y-%m-%d).zip
 
 running=
 while true; do
