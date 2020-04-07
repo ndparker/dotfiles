@@ -1,0 +1,52 @@
+#!/bin/bash
+set -e
+
+# https://unix.stackexchange.com/a/259254
+hr() {
+    local b d s S
+
+    b=${1:-0}; d=''; s=0; S=(B {K,M,G,T,P,E,Z,Y})
+    while ((b > 1024)); do
+        d="$(printf ".%02d" $((b % 1024 * 100 / 1024)))"
+        b=$((b / 1024))
+        let s++
+    done
+    echo "$b$d${S[$s]}"
+}
+
+t="$(echo -e '\t')"
+
+dodu() {
+    local bucket region now cmd standard glacier
+    bucket="$1"
+    shift
+    region="$(aws s3api get-bucket-location --bucket "${bucket}" --output text)"
+    [ "${region}" != "None" ] || region=us-east-1
+    [ "${region}" != EU ] || region=eu-west-1
+    now="$(date +%s)"
+
+    cmd=(aws --region "${region}" cloudwatch get-metric-statistics
+         --query "Datapoints[0].Average" --output text
+         --start-time "$(date +%Y-%m-%d -d "@$(( $now - 86400 ))")"
+         --end-time "$(date +%Y-%m-%d -d "@${now}")" --period 86400
+         --namespace AWS/S3 --statistics Average --metric-name BucketSizeBytes
+         --dimensions Name=BucketName,Value="${bucket}")
+
+    standard="$( "${cmd[@]}" Name=StorageType,Value=StandardStorage )"
+    [ "${standard}" != None ] || standard=0.0
+    glacier="$( "${cmd[@]}" Name=StorageType,Value=GlacierStorage )"
+    [ "${glacier}" != None ] || glacier=0.0
+
+    echo "$(hr "${standard%%.*}")${t}$(hr "${glacier%%.*}")${t}${bucket}${t}${region}"
+}
+
+if [ $# -eq 0 ]; then
+    aws s3 ls | awk '{print $3}' | sort | while read bucket; do
+        dodu "${bucket}"
+    done
+else
+    while [ $# -gt 0 ]; do
+        dodu "${1}"
+        shift
+    done
+fi
