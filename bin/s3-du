@@ -14,6 +14,88 @@ hr() {
     echo "$b$d${S[$s]}"
 }
 
+# https://github.com/bpowers/musl/blob/master/src/time/__secs_to_tm.c
+timegm() {(
+    set -e
+
+    # 2000-03-01 (mod 400 year, immediately after feb29
+    LEAPOCH=$(( 946684800 + 86400*(31+29) ))
+    DAYS_PER_400Y=$(( 365*400 + 97 ))
+    DAYS_PER_100Y=$(( 365*100 + 24 ))
+    DAYS_PER_4Y=$(( 365*4 + 1 ))
+    days_in_month=(31 30 31 30 31 31 30 31 30 31 31 29)
+
+    secs=$(( ${1} - ${LEAPOCH} ))
+    days=$(( ${secs} / 86400 ))
+    remsecs=$(( ${secs} % 86400 ))
+    if [ "${remsecs}" -lt 0 ]; then
+        remsecs=$(( ${remsecs} + 86400 ))
+        days=$(( ${days} - 1 ))
+    fi
+
+    wday=$(( (3 + ${days} ) % 7 ))
+    [ "${wday}" -ge 0 ] || wday=$(( ${wday} + 7 ))
+
+    qc_cycles=$(( ${days} / ${DAYS_PER_400Y} ))
+    remdays=$(( ${days} % ${DAYS_PER_400Y} ))
+    if [ "${remdays}" -lt 0 ]; then
+        remdays=$(( ${remdays} + ${DAYS_PER_400Y} ))
+        qc_cycles=$(( ${qc_cycles} - 1 ))
+    fi
+
+    c_cycles=$(( ${remdays} / ${DAYS_PER_100Y} ))
+    [ "${c_cycles}" -ne 4 ] || c_cycles=$(( ${c_cycles} - 1 ))
+    remdays=$(( ${remdays} - ${c_cycles} * ${DAYS_PER_100Y} ))
+
+	q_cycles=$(( ${remdays} / ${DAYS_PER_4Y} ))
+	[ "${q_cycles}" -ne 25 ] || q_cycles=$(( ${q_cycles} - 1 ))
+	remdays=$(( ${remdays} - ${q_cycles} * ${DAYS_PER_4Y} ))
+
+    remyears=$(( ${remdays} / 365 ))
+	[ "${remyears}" -ne 4 ] || remyears=$(( ${remyears} - 1 ))
+	remdays=$(( ${remdays} - ${remyears} * 365 ))
+
+    leap=0
+    if [ "${remyears}" -eq 0 ] && [ "${q_cycles}" -ne 0 -o "${c_cycles}" -eq 0 ]; then
+        leap=1
+    fi
+
+    yday=$(( ${remdays} + 31 + 28 + ${leap} ))
+    [ "${yday}" -lt $(( 365 + ${leap} )) ] || yday=$(( ${yday} - 365 - ${leap} ))
+
+    years=$(( ${remyears} + 4*${q_cycles} + 100*${c_cycles} + 400*${qc_cycles} ))
+
+    months=0
+    while [ "${days_in_month[${months}]}" -le "${remdays}" ]; do
+        remdays=$(( ${remdays} - ${days_in_month[${months}]} ))
+        months=$(( ${months} + 1 ))
+    done
+
+    months=$(( ${months} + 2 ))
+    if [ "${months}" -ge 12 ]; then
+        months=$(( ${months} - 12 ))
+        years=$(( ${years} + 1 ))
+    fi
+    years=$(( ${years} + 100 + 1900 ))
+
+    hour=$(( ${remsecs} / 3600 ))
+    minute=$(( ${remsecs} / 60 % 60 ))
+    second=$(( ${remsecs} % 60 ))
+
+    mday=$(( ${remdays} + 1 ))
+    [ "${mday}" -ge 10 ] || mday="0${mday}"
+    [ "${months}" -ge 10 ] || months="0${months}"
+    [ "${hour}" -ge 10 ] || hour="0${hour}"
+    [ "${minute}" -ge 10 ] || minute="0${minute}"
+    [ "${second}" -ge 10 ] || second="0${second}"
+
+    date="${years}-${months}-${mday}"
+    time="${hour}:${minute}:${second}"
+
+    # yday and wday missing, TODO: add some options
+    echo "${date} ${time} UTC"
+)}
+
 t="$(echo -e '\t')"
 
 dodu() {
@@ -27,8 +109,8 @@ dodu() {
 
     cmd=(aws --region "${region}" cloudwatch get-metric-statistics
          --query "Datapoints[0].Average" --output text
-         --start-time "$(date +%Y-%m-%d -d "@$(( $now - 86400 ))")"
-         --end-time "$(date +%Y-%m-%d -d "@${now}")" --period 86400
+         --start-time "$(timegm "$(( ${now} - 86400 ))" | cut -d' ' -f1)"
+         --end-time "$(timegm "${now}" | cut -d' ' -f1)" --period 86400
          --namespace AWS/S3 --statistics Average --metric-name BucketSizeBytes
          --dimensions Name=BucketName,Value="${bucket}")
 
