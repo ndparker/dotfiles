@@ -102,8 +102,14 @@ dodu() {
     local bucket region now cmd standard glacier
     bucket="$1"
     shift
-    region="$(aws s3api get-bucket-location --bucket "${bucket}" --output text)"
-    [ "${region}" != "None" ] || region=us-east-1
+
+    region="$( \
+        curl -s -I "http://${bucket}.s3.amazonaws.com/" \
+        | grep -i ^x-amz-bucket-region \
+        | cut -d: -f2 | sed -e 's,[^a-zA-Z0-9-],,g' \
+    )"
+    # region="$(aws s3api get-bucket-location --bucket "${bucket}" --output text)"
+    [ -n "${region}" ] || region=us-east-1
     [ "${region}" != EU ] || region=eu-west-1
     now="$(date +%s)"
 
