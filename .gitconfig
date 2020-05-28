@@ -8,6 +8,7 @@
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen%cr%Creset %Cblue[%ar]%Creset %C(bold blue)<%an>%Creset' --color --abbrev-commit
     ln = log --graph --pretty=format:'%h -%d% %s [%ar] <%an>' --no-color --abbrev-commit
     diff = diff --minimal
+    diffo = !git diff "origin/$(git branch --show-current)"
     please = push --force-with-lease
     it = !git init && git commit -m “root” --allow-empty
     uncommit = reset HEAD~
