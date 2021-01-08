@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+bin=~/bin
+vdir="${bin}"/.img2pdf.venv
+
+rebuild=1
+if [ -d "${vdir}/bin" ]; then
+    . "${vdir}/bin/activate" && rebuild= || true
+fi
+if [ -n "${rebuild}" ]; then
+    rm -rf -- "${vdir}"
+    mkdir -p -- "${vdir}"
+    (
+        cd "${vdir}" || exit $?
+        virtualenv . || exit $?
+        rm -f .installed
+    ) || exit $?
+    . "${vdir}/bin/activate"
+fi
+
+if [ ! -f "${vdir}/.installed" ]; then
+    pip install img2pdf
+    touch -- "${vdir}/.installed"
+fi
+
+exec "${vdir}/bin/img2pdf" "$@"
