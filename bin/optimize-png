@@ -1,0 +1,131 @@
+#!/bin/bash
+set -e
+
+die() {
+    echo "${@}" >&2
+    exit 1
+}
+
+usage() {
+    die "$(cat <<HERE
+Usage: ${0} [-f] [-k] [-q Quantization] file [file ...]
+       ${0} -h
+
+       This script cuts down size of png images as much as possible (lossy!).
+
+       Options:
+
+       -h   Show help and exit
+
+       -q   Quantization quality. (Default: 1)
+            N = automatic quality, uses limit unless force is set (N-N or 0-N)
+            -N = no better than N (same as 0-N)
+            N-M = no worse than N, no better than M
+            N-  = no worse than N, perfect if possible (same as N-100)
+
+            where N,M are numbers between 0 (lousy) and 100 (perfect)
+
+       -f   Modify original file
+       -k   Keep temp files (Implicit if -f is not set)
+HERE
+)"
+}
+
+overwrite=
+keep=
+quant=1
+while getopts "hfkq:" opt; do
+    case "${opt}" in
+        h) (usage) || exit 2; exit 2;;
+        f) overwrite=1 ;;
+        k) keep=1 ;;
+        q) quant="${OPTARG}" ;;
+        *) die "Unknown option -${opt}" ;;
+    esac
+done
+shift "$((OPTIND - 1))"
+
+if [ -z "${overwrite}" ]; then
+    keep=1
+fi
+
+bold="$(tput bold 2>/dev/null || true)"
+normal="$(tput sgr0 2>/dev/null || true)"
+
+while [ $# -gt 0 ]; do
+    file="${1}"
+    shift
+
+    base="$(dirname -- "${file}")/crushed"
+    prefix="${base}/$(basename -- "${file}")"
+
+    mkdir -p -- "${base}"
+
+    echo "${bold}pngquant ${file}...${normal}"
+    pngquant -f -v --speed 1 --strip --quality "${quant}" --transbug \
+        -o "${prefix}.pngquant" -- "${file}"
+
+    {
+        f1="${prefix}.pngquant"
+        f2="${prefix}.pngrewrite"
+        echo "${bold}pngrewrite ${file}...${normal}"
+        pngrewrite "${f1}" "${f2}" || cp -- "${f1}" "${f2}"
+        s1="$(stat --printf %s "${f1}")"
+        s2="$(stat --printf %s "${f2}")"
+        [[ ${s2} -ge ${s1} ]] && cp -- "${f1}" "${f2}" || true
+    } && {
+        f1="${prefix}.pngrewrite"
+        f2="${prefix}.pngcrush"
+        echo "${bold}pngcrush ${file}...${normal}"
+        pngcrush -rem gAMA -rem cHRM -rem iCCP -rem sRGB -rem alla -rem text \
+            -reduce -brute "${f1}" "${f2}" || cp -- "${f1}" "${f2}"
+        s1="$(stat --printf %s "${f1}")"
+        s2="$(stat --printf %s "${f2}")"
+        [[ ${s2} -ge ${s1} ]] && cp -- "${f1}" "${f2}" || true
+    } && {
+        f1="${prefix}.pngcrush"
+        f2="${prefix}.optipng"
+        echo "${bold}optipng ${file}...${normal}"
+        optipng -strip all -o7 -out "${f2}" -- "${f1}" || cp -- "${f1}" "${f2}"
+        s1="$(stat --printf %s "${f1}")"
+        s2="$(stat --printf %s "${f2}")"
+        [[ ${s2} -ge ${s1} ]] && cp -- "${f1}" "${f2}" || true
+    }
+
+    # stats + apply
+    f0="${file}"
+    f1="${prefix}.pngquant"
+    f2="${prefix}.pngrewrite"
+    f3="${prefix}.pngcrush"
+    f4="${prefix}.optipng"
+    s0="$(stat --printf %s "${f0}")"
+    s1="$(stat --printf %s "${f1}")"
+    s2="$(stat --printf %s "${f2}")"
+    s3="$(stat --printf %s "${f3}")"
+    s4="$(stat --printf %s "${f4}")"
+    sf="${s0}"
+    fx=
+
+    [[ ${sf} -gt ${s1} ]] && fx="${f1}"
+    [[ ${sf} -gt ${s2} ]] && fx="${f2}"
+    [[ ${sf} -gt ${s3} ]] && fx="${f3}"
+    [[ ${sf} -gt ${s4} ]] && fx="${f4}"
+
+    printf "quant: %7d\trewrite: %7d\tcrush: %7d\topti: %7d\t(%7d)\t%s\n" \
+        "${s1}" "${s2}" "${s3}" "${s4}" "${s0}" "${file}"
+
+    if [[ -n "${overwrite}" && -n "${fx}" ]]; then
+        cp -- "${fx}" "${f0}"
+    fi
+    if [[ -z "${keep}" ]]; then
+        rm -f -- "${f1}" "${f2}" "${f3}" "${f4}"
+        rmdir -- "${base}" >/dev/null 2>/dev/null || true
+    fi
+done
+
+
+# # cleanup
+# svn stat | grep ? | grep 'crushed$' | awk '{print $2}' | while read file; do
+#     rm -rf -- "$file"
+# done
+
