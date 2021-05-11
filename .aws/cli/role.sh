@@ -121,7 +121,7 @@ prepare_config() {(
         ) >"${filename}.tmp"
 
         if [ -s "${filename}.tmp.default" ]; then
-            echo "[profile default]" >>"${filename}.tmp"
+            echo "[default]" >>"${filename}.tmp"
             cat <"${filename}.tmp.default" >>"${filename}.tmp"
         fi
         rm -f -- "${filename}.tmp.default"
