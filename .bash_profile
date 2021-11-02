@@ -231,3 +231,7 @@ project38() {
 project39() {
     _project 3.9 "${1}" "${2:-${default_project_owner}}" "${3:-${default_project_base}}"
 }
+
+project310() {
+    _project 3.10 "${1}" "${2:-${default_project_owner}}" "${3:-${default_project_base}}"
+}
