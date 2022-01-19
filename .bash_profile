@@ -36,6 +36,9 @@ unset i
 
 export GPG_TTY=`tty`
 
+export PIP_RETRIES=20
+export PIP_TIMEOUT=60
+
 umask 022
 
 declare -A colors=(
