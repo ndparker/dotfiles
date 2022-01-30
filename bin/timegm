@@ -63,6 +63,8 @@ timegm() {(
         years=$(( ${years} + 1 ))
     fi
     years=$(( ${years} + 100 + 1900 ))
+    # differing from struct tm: we need month starting with 1.
+    months=$(( ${month} + 1 ))
 
     hour=$(( ${remsecs} / 3600 ))
     minute=$(( ${remsecs} / 60 % 60 ))
