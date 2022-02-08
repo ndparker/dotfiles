@@ -1,0 +1,12 @@
+#!/bin/bash
+
+flipfile=~/.busylight-flip
+
+flip="$( head -n1 "${flipfile}" 2>/dev/null || true )"
+if [ "${flip}" = on ]; then
+    busylight off
+    rm -f -- "${flipfile}"
+else
+    busylight on red
+    echo "on" >"${flipfile}"
+fi
