@@ -12,7 +12,7 @@ if [ -n "${rebuild}" ]; then
     mkdir -p -- "${vdir}"
     (
         cd -- "${vdir}" || exit $?
-        virtualenv --clear --python /usr/bin/python3.6 . || exit $?
+        virtualenv --clear --python /usr/bin/python3.9 . || exit $?
         rm -f .installed
     ) || exit $?
     . "${vdir}/bin/activate"
