@@ -43,6 +43,9 @@ iam="$(aws sts get-caller-identity --output text --query 'Arn' 2>/dev/null || tr
 # Config file for profile settings
 filename=~/.aws/config
 
+# session profile name in credentials
+profile="session"
+
 # Tempfile cleanup atexit
 tmpfile=
 cleanup() {
@@ -87,6 +90,7 @@ if [ -n "${role}" ]; then
         role_alias="${role}"
         role="${!var}"
     fi
+    [ "${role}" != "${role//:/}" ] || die "Invalid role/alias: ${role}"
 fi
 
 
@@ -136,9 +140,9 @@ prepare_config() {(
 # Input: $1 (token), $mfa_force
 # Output: ~/.aws/{config,credentials}
 ############################################################################
-conf=( aws configure set --profile default )
+conf=( aws configure set --profile )
 do_login() {
-    local token
+    local token sconf cmd
     token="${1}"; shift
 
     # Ask for MFA if needed
@@ -160,15 +164,16 @@ do_login() {
           --output text
           --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' )
 
+    sconf=( "${conf[@]}" "${profile}" )
     tmpfile="$(mktemp)"
     (
         set +e
         set -o pipefail
         "${cmd[@]}" 2>"${tmpfile}" | (
             read key secret session
-            "${conf[@]}" aws_access_key_id "${key}"
-            "${conf[@]}" aws_secret_access_key "${secret}"
-            "${conf[@]}" aws_session_token "${session}"
+            "${sconf[@]}" aws_access_key_id "${key}"
+            "${sconf[@]}" aws_secret_access_key "${secret}"
+            "${sconf[@]}" aws_session_token "${session}"
         )
     )
 
@@ -196,8 +201,8 @@ if [ -z "${iam}" -o -n "${token}" ]; then
 fi
 
 if [ -n "${role}" ]; then
-    "${conf[@]}" role_arn "${role}"
-    "${conf[@]}" source_profile default
+    "${conf[@]}" default role_arn "${role}"
+    "${conf[@]}" default source_profile "${profile}"
 fi
 
 user="$(aws sts get-caller-identity --query 'Arn' --output text)"
