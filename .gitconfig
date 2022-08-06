@@ -3,6 +3,14 @@
     email = ndparker@users.noreply.github.com
 [push]
     default = simple
+[init]
+    defaultBranch = master
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+
 [alias]
     co = checkout
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen%cr%Creset %Cblue[%ar]%Creset %C(bold blue)<%an>%Creset' --color --abbrev-commit
@@ -14,5 +22,3 @@
     uncommit = reset HEAD~
     empty = commit --allow-empty
 
-[init]
-    defaultBranch = master
