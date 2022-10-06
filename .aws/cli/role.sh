@@ -90,7 +90,9 @@ if [ -n "${role}" ]; then
         role_alias="${role}"
         role="${!var}"
     fi
-    [ "${role}" != "${role//:/}" ] || die "Invalid role/alias: ${role}"
+    if [ "${role}" = "${role//:/}" ]; then
+        [ "${role_alias}" = "user" ] || die "Invalid role/alias: ${role}"
+    fi
 fi
 
 
@@ -142,7 +144,7 @@ prepare_config() {(
 ############################################################################
 conf=( aws configure set --profile )
 do_login() {
-    local token sconf cmd
+    local token cmd
     token="${1}"; shift
 
     # Ask for MFA if needed
@@ -164,16 +166,20 @@ do_login() {
           --output text
           --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' )
 
-    sconf=( "${conf[@]}" "${profile}" )
     tmpfile="$(mktemp)"
     (
         set +e
         set -o pipefail
         "${cmd[@]}" 2>"${tmpfile}" | (
             read key secret session
-            "${sconf[@]}" aws_access_key_id "${key}"
-            "${sconf[@]}" aws_secret_access_key "${secret}"
-            "${sconf[@]}" aws_session_token "${session}"
+            "${conf[@]}" "${profile}" aws_access_key_id "${key}"
+            "${conf[@]}" "${profile}" aws_secret_access_key "${secret}"
+            "${conf[@]}" "${profile}" aws_session_token "${session}"
+
+            # For the "user" profile
+            "${conf[@]}" default aws_access_key_id "${key}"
+            "${conf[@]}" default aws_secret_access_key "${secret}"
+            "${conf[@]}" default aws_session_token "${session}"
         )
     )
 
