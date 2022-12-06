@@ -8,6 +8,7 @@ dice() {
 }
 
 alias g=gvim
+alias k=kubectl
 alias backup-config='scopy ~/.config ~/.config.backup/'
 alias pipefox='firefox "data:text/html;base64,$(base64 -w 0 <&0)"'
 cfox() {
