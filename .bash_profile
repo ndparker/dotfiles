@@ -105,7 +105,7 @@ parse_git_repo() {
 prompt_command() {
     PS1="$(pc green bold)\u@\h$(pc blue bold) \w$(pc reset)$(parse_git_repo) $(pc blue bold)\$$(pc reset) "
     if [ -n "${VIRTUAL_ENV}" ]; then
-        PS1="$(pc white bold)($(basename "${VIRTUAL_ENV}") $(pc reset)$(python -V | cut -d ' ' -f2 | cut -d. -f1,2)$(pc white bold))$(pc reset) ${PS1}"
+        PS1="$(pc white bold)($(basename "${VIRTUAL_ENV}") $(pc reset)$(python -V 2>&1 | cut -d ' ' -f2 | cut -d. -f1,2)$(pc white bold))$(pc reset) ${PS1}"
     fi
 }
 PROMPT_COMMAND=prompt_command
