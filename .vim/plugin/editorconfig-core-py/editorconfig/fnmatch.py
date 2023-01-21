@@ -123,4 +123,4 @@ def translate(pat):
                 i = j + 1
         else:
             res = res + re.escape(c)
-    return res + '\Z(?ms)'
+    return '(?ms)' + res + '\Z'
