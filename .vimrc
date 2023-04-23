@@ -3,7 +3,7 @@
 set filetype=unknown
 set background=dark
 set confirm
-set guioptions=agimrLtTbH
+set guioptions=agimrLtTb
 set noequalalways
 set laststatus=2
 set scrolloff=2
