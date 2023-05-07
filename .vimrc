@@ -91,6 +91,8 @@ let g:syntastic_xml_checkers=['']
 
 autocmd FileType python setlocal fdc=1
 autocmd FileType python setlocal foldmethod=expr
+" let SimpylFold_docstring_preview=1
+let SimpylFold_fold_docstring=0
 autocmd FileType python setlocal tw=78
 let python_highlight_all=1
 let python_slow_sync=1
