@@ -21,4 +21,4 @@
     it = !git init && git commit -m “root” --allow-empty
     uncommit = reset HEAD~
     empty = commit --allow-empty
-
+    pr = !"_foo() { git fetch origin pull/\"${1}\"/head:\"${2:-pr${1}}\" && git checkout \"${2:-pr${1}}\"; }; _foo"
