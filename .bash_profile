@@ -180,6 +180,7 @@ grunt() {
 }
 
 if [ -r /usr/bin/virtualenvwrapper.sh ]; then
+    VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
     . /usr/bin/virtualenvwrapper.sh
 
     alias venv='. "$(venvexec.sh . /bin/sh -c '\''echo "${VIRTUAL_ENV}"'\'')/bin/activate"'
