@@ -144,8 +144,13 @@ prepare_config() {(
 ############################################################################
 conf=( aws configure set --profile )
 do_login() {
-    local token cmd
+    local token cmd mfa_arn
     token="${1}"; shift
+
+    mfa_arn="${arn/:user\//:mfa/}"
+    if [ -n "${mfa_name:-}" ]; then
+        mfa_arn="${mfa_arn%/*}/${mfa_name}"
+    fi
 
     # Ask for MFA if needed
     if [ -z "${token}" -a -n "${mfa_force}" ]; then
@@ -159,7 +164,7 @@ do_login() {
         # reset iam, because it doesn't matter. We have a token, we will apply.
         iam=
         cmd=( "${cmd[@]}"
-              --serial-number "${arn/:user\//:mfa/}"
+              --serial-number "${mfa_arn}"
               --token-code "${token}" )
     fi
     cmd=( "${cmd[@]}"
