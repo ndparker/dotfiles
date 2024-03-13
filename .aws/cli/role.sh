@@ -13,11 +13,13 @@ die() {
 
 usage() {
     base="$(basename "${0}")"
-    echo "${base}              - as default role" >&2
-    echo "${base} <role>       - as role" >&2
-    echo "${base} <role> <mfa> - as role with mfa" >&2
-    echo "${base} <mfa>        - as default role with mfa" >&2
-    echo "${base} <mfa> <role> - as role with mfa" >&2
+    echo "${base} -h                       - this help" >&2
+    echo
+    echo "${base} [-p <user>]              - as default role" >&2
+    echo "${base} [-p <user>] <role>       - as role" >&2
+    echo "${base} [-p <user>] <role> <mfa> - as role with mfa" >&2
+    echo "${base} [-p <user>] <mfa>        - as default role with mfa" >&2
+    echo "${base} [-p <user>] <mfa> <role> - as role with mfa" >&2
     exit 2
 }
 
@@ -28,17 +30,36 @@ usage() {
 # "user" is a special role (no role, plain user)
 role_user=
 
+# Default user, if no default user is given. If unset or empty it defaults to "user"
+default_user="${default_user:-user}"
+
 # Default role, if no role is given. If unset or empty it defaults to "user"
 default_role="${default_role:-user}"
 
 # Force MFA input? If non-empty: yes. Default: false
 [ "${mfa_force:+x}" = x ] || mfa_force=
 
+wanted_user="${default_user}"
+while getopts "hp:" opt; do
+    case "${opt}" in
+        h) (usage) || exit 2; exit 2;;
+        p) wanted_user="${OPTARG}" ;;
+        *) die "Unknown option -${opt}" ;;
+    esac
+done
+shift "$((OPTIND - 1))"
+
 # Who is this user?
-arn="$(aws sts get-caller-identity --profile user --output text --query 'Arn')"
+arn="$(aws sts get-caller-identity --profile "${wanted_user}" --output text --query 'Arn')"
+[ "${arn/:user}" != "${arn}" ] || die "User is not a user: ${wanted_user} -> ${arn}"
 
 # Who am I right now?
 iam="$(aws sts get-caller-identity --output text --query 'Arn' 2>/dev/null || true)"
+
+# Reset if we're switching users
+if [ "${iam/:user}" != "${iam}" -a "${iam}" != "${wanted_user}" ]; then
+    iam=
+fi
 
 # Config file for profile settings
 filename=~/.aws/config
@@ -159,7 +180,7 @@ do_login() {
     fi
 
     # Build command
-    cmd=( aws --profile user sts get-session-token )
+    cmd=( aws --profile "${wanted_user}" sts get-session-token )
     if [ -n "${token}" ]; then
         # reset iam, because it doesn't matter. We have a token, we will apply.
         iam=
