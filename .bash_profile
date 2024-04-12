@@ -137,7 +137,6 @@ gc() {
 
 alias fab="venvexec.sh ./ fab"
 alias inv="venvexec.sh ./ inv"
-alias amz="aws role"
 
 BOWERBIN="$(which bower 2>/dev/null)"
 bower() {
