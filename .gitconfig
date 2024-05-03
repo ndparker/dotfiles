@@ -1,6 +1,7 @@
-[user]
-    name = ndparker
-    email = ndparker@users.noreply.github.com
+[include]
+    path = ~/.gitconfig-ndparker
+[includeIf "gitdir:~/work/"]
+    path = ~/.gitconfig-work
 [push]
     default = simple
 [init]
