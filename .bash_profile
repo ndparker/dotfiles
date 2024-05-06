@@ -178,9 +178,21 @@ grunt() {
 )
 }
 
-if [ -r /usr/bin/virtualenvwrapper.sh ]; then
+_venv_wrapper="$(
+    wrappers=(
+        /usr/bin/virtualenvwrapper.sh
+        /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+    )
+    for cand in "${wrappers[@]}"; do
+        if [ -r "${cand}" ]; then
+            echo "${cand}"
+            break
+        fi
+    done
+)"
+if [ -n "${_venv_wrapper}" ]; then
     VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
-    . /usr/bin/virtualenvwrapper.sh
+    . "${_venv_wrapper}"
 
     alias venv='. "$(venvexec.sh . /bin/sh -c '\''echo "${VIRTUAL_ENV}"'\'')/bin/activate"'
     eval "$(
