@@ -1,8 +1,10 @@
 #!/bin/sh
 set -e
 
+# https://github.com/LineageOS/update_verifier/tree/main
+name="lineage-verify"
 bin=~/bin
-vdir="${bin}"/.lineage-verify.venv
+vdir="${bin}"/.${name}.venv
 
 rebuild=1
 if [ -d "${vdir}/bin" ]; then
@@ -12,24 +14,21 @@ if [ -n "${rebuild}" ]; then
     mkdir -p -- "${vdir}"
     (
         cd -- "${vdir}" || exit $?
-        virtualenv --clear --python /usr/bin/python3.9 . || exit $?
+        virtualenv --clear --python /usr/bin/python3.11 . || exit $?
         rm -f .installed
     ) || exit $?
     . "${vdir}/bin/activate"
 fi
 
 if [ ! -f "${vdir}/.installed" ]; then
-    pip install \
-        asn1crypto==0.24.0 \
-        cffi==1.11.5 \
-        cryptography==2.1.4 \
-        idna==2.6 \
-        pycparser==2.18 \
-        pyOpenSSL==17.5.0 \
-        six==1.11.0
+    pip install oscrypto==1.3.0 asn1crypto==1.5.1
+    (
+        cd "${vdir}"/lib/python*/site-packages/
+        patch -p0 <"${bin}/".oscrypto-version.patch
+    )
     cp -- "${bin}/lineage-verify.py" "${vdir}/lineage-verify.py"
     chmod 750 -- "${vdir}/lineage-verify.py"
     touch -- "${vdir}/.installed"
 fi
 
-exec "${vdir}/lineage-verify.py" "$@"
+exec "${vdir}/lineage-verify.py" ~/bin/.lineageos_pubkey "$@"

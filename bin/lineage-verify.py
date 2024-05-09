@@ -1,74 +1,131 @@
-#!/usr/bin/env python3
-# https://review.lineageos.org/#/c/LineageOS/scripts/+/208294/
-#adopted from https://pastebin.com/raw/qYcvaWyX
+#!/usr/bin/env python
+from __future__ import print_function
 
-import base64
+from asn1crypto.cms import ContentInfo
+from asn1crypto.algos import DigestAlgorithmId
+from oscrypto.asymmetric import rsa_pkcs1v15_verify, load_public_key
+from oscrypto.errors import SignatureError
+
+import argparse
 import os
 import sys
+import traceback
 
-from OpenSSL import crypto
-
-
-def get_certificates(self):
-    from OpenSSL.crypto import X509
-    from OpenSSL._util import ffi as _ffi, lib as _lib
-    certs = _ffi.NULL
-    if self.type_is_signed():
-       certs = self._pkcs7.d.sign.cert
-    elif self.type_is_signedAndEnveloped():
-        certs = self._pkcs7.d.signed_and_enveloped.cert
-
-    pycerts = []
-    for i in range(_lib.sk_X509_num(certs)):
-        pycert = X509.__new__(X509)
-        pycert._x509 = _lib.sk_X509_value(certs, i)
-        pycerts.append(pycert)
-    if not pycerts:
-        return None
-    return tuple(pycerts)
-
-crypto.PKCS7.get_certificates = get_certificates
+FOOTER_SIZE = 6
+EOCD_HEADER_SIZE = 22
 
 
+class SignedFile(object):
+    def __init__(self, filepath):
+        self._comment_size = None
+        self._eocd = None
+        self._eocd_size = None
+        self._footer = None
+        self._signed_len = None
+        self._signature_start = None
+        self.filepath = filepath
+        self.length = os.path.getsize(filepath)
 
-if len(sys.argv) != 2:
-    print("Usage: python verify.py <filename>")
-    sys.exit(0)
+    @property
+    def footer(self):
+        if self._footer is not None:
+            return self._footer
+        with open(self.filepath, 'rb') as zipfile:
+            zipfile.seek(-FOOTER_SIZE, os.SEEK_END)
+            self._footer = bytearray(zipfile.read())
+        return self._footer
 
-f = open(sys.argv[1], 'rb')
-file_size = os.stat(sys.argv[1]).st_size
-f.seek(file_size - 6)
-footer = f.read(6)
+    @property
+    def comment_size(self):
+        if self._comment_size is not None:
+            return self._comment_size
+        self._comment_size = self.footer[4] + (self.footer[5] << 8)
+        return self._comment_size
 
-if footer[2] != ord(b'\xff') or footer[3] != ord(b'\xff'):
-    print("no signature in file (no footer)")
-    sys.exit(-1)
+    @property
+    def signature_start(self):
+        if self._signature_start is not None:
+            return self._signature_start
+        self._signature_start = self.footer[0] + (self.footer[1] << 8)
+        return self._signature_start
 
-commentSize = (footer[4] & 255) | ((footer[5] & 255) <<8)
-signatureStart = (footer[0] & 255) | ((footer[1] & 255) << 8)
+    @property
+    def eocd_size(self):
+        if self._eocd_size is not None:
+            return self._eocd_size
+        self._eocd_size = self.comment_size + EOCD_HEADER_SIZE
+        return self._eocd_size
 
-f.seek(file_size - (commentSize + 22));
-eocd = bytearray(f.read())
+    @property
+    def eocd(self):
+        if self._eocd is not None:
+            return self._eocd
+        with open(self.filepath, 'rb') as zipfile:
+            zipfile.seek(-self.eocd_size, os.SEEK_END)
+            eocd = bytearray(zipfile.read(self.eocd_size))
+        self._eocd = eocd
+        return self._eocd
 
-if eocd[0] != ord(b'\x50') or eocd[1] != ord(b'\x4b') or eocd[2] != ord(b'\x05') or eocd[3] != ord(b'\x06'):
-    print("no signature in file (bad eocd)")
-    sys.exit(-1)
+    @property
+    def signed_len(self):
+        if self._signed_len is not None:
+            return self._signed_len
+        signed_len = self.length - self.eocd_size + EOCD_HEADER_SIZE - 2
+        self._signed_len = signed_len
+        return self._signed_len
 
-for i in range(5, len(eocd)-4):
-    if eocd[i] == ord(b'\x50') and eocd[i+1] == ord(b'\x4b') and eocd[i+2] == ord(b'\x05') and eocd[i+3] == ord(b'\x06'):
-        print("EOCD marker found after start of EOCD")
-        sys.exit(-1)
+    def check_valid(self):
+        assert self.footer[2] == 255 and self.footer[3] == 255, (
+            "Footer has wrong magic")
+        assert self.signature_start <= self.comment_size, (
+            "Signature start larger than comment")
+        assert self.signature_start > FOOTER_SIZE, (
+            "Signature inside footer or outside file")
+        assert self.length >= self.eocd_size, "EOCD larger than length"
+        assert self.eocd[0:4] == bytearray([80, 75, 5, 6]), (
+            "EOCD has wrong magic")
+        with open(self.filepath, 'rb') as zipfile:
+            for i in range(0, self.eocd_size-1):
+                zipfile.seek(-i, os.SEEK_END)
+                assert bytearray(zipfile.read(4)) != bytearray(
+                    [80, 75, 5, 6]), ("Multiple EOCD magics; possible exploit")
+        return True
 
-block = eocd[commentSize+22-signatureStart:commentSize+22]
+    def verify(self, pubkey):
+        self.check_valid()
+        with open(self.filepath, 'rb') as zipfile:
+            zipfile.seek(0, os.SEEK_SET)
+            message = zipfile.read(self.signed_len)
+            zipfile.seek(-self.signature_start, os.SEEK_END)
+            signature_size = self.signature_start - FOOTER_SIZE
+            signature_raw = zipfile.read(signature_size)
+        sig = ContentInfo.load(signature_raw)['content']['signer_infos'][0]
+        sig_contents = sig['signature'].contents
+        sig_type = DigestAlgorithmId.map(sig['digest_algorithm']['algorithm'].dotted)
+        with open(pubkey, 'rb') as keyfile:
+            keydata = load_public_key(keyfile.read())
+        return rsa_pkcs1v15_verify(keydata, sig_contents, message, sig_type)
 
-decoded = "-----BEGIN CERTIFICATE-----\n" + base64.b64encode(block).decode('ascii') + "\n-----END CERTIFICATE-----"
 
-PKCS7 = crypto.load_pkcs7_data(crypto.FILETYPE_PEM, decoded)
+def main():
+    parser = argparse.ArgumentParser(description='Verifies whole file signed '
+                                                 'Android update files')
+    parser.add_argument('public_key')
+    parser.add_argument('zipfile')
+    args = parser.parse_args()
 
-cert = PKCS7.get_certificates()[0]
+    signed_file = SignedFile(args.zipfile)
+    try:
+        signed_file.verify(args.public_key)
+        print("verified successfully", file=sys.stderr)
+    except (SignatureError,
+            ValueError,
+            TypeError,
+            OSError) as e:
+        traceback.print_exc()
+        print("failed verification", file=sys.stderr)
+        sys.exit(1)
 
-print("Certificate Fingerprints:")
 
-print("\tMD5: {}".format(cert.digest('md5').decode("utf-8")))
-print("\tSHA1: {}".format(cert.digest("sha1").decode("utf-8")))
-print("\tSHA256: {}".format(cert.digest("sha256").decode("utf-8")))
+if __name__ == '__main__':
+    main()

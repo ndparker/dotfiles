@@ -1,8 +1,9 @@
 #!/bin/sh
 set -e
 
+name="emailproxy"
 bin=~/bin
-vdir="${bin}"/.busylight.venv
+vdir="${bin}/.${name}.venv"
 
 rebuild=1
 if [ -d "${vdir}/bin" ]; then
@@ -20,8 +21,14 @@ if [ -n "${rebuild}" ]; then
 fi
 
 if [ ! -f "${vdir}/.installed" ]; then
-    pip install busylight-for-humans
+    pip install emailproxy[gui]
     touch -- "${vdir}/.installed"
 fi
 
-exec "${vdir}/bin/busylight" "$@"
+exec "${vdir}/bin/emailproxy" \
+    --no-gui \
+    --external-auth \
+    --config-file ~/.emailproxy/config \
+    --cache-store ~/.emailproxy/cache \
+    "$@"
+
