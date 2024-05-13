@@ -1,70 +1,72 @@
 #!/usr/bin/env bash
-set -e
+# Copyright 2015 - 2024
+# Andr\xe9 Malo or his licensors, as applicable
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-if [ -f ~/.aws/role.config ]; then
-    . ~/.aws/role.config
+set -eu
+
+if [ "${DEBUG:-}" = "true" ]; then
+    PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    set -x
 fi
 
-
-die() {
-    [ $# -eq 0 ] || echo "${@}" >&2
-    exit 1
-}
+. "$(dirname -- "${BASH_SOURCE}")/_config.sh"
+. "$(dirname -- "${BASH_SOURCE}")/_sso.sh"
+. "$(dirname -- "${BASH_SOURCE}")/_role.sh"
 
 usage() {
+    local base
+
     base="$(basename "${0}")"
-    echo "${base} <role>  - as role" >&2
+
+    echo "${base} <profile> - show console link" >&2
     exit 2
 }
 
-############################################################################
-# Defaults and presets
-############################################################################
- 
-# "user" is a special role (no role, plain user)
-role_user=
-
-# Default role, if no role is given. If unset or empty it defaults to "user"
-default_role="${default_role:-user}"
-
 
 ############################################################################
-# Parse commandline (see usage)
+# main [<profile>]
 #
-# Input: $@
-# Output: $role (expanded if possible), $token
+# Emit console URL for the specified role / SSO login.
+#
+# If no valid credentials are found, the error message is emitted to STDERR
+#
+# Input:
+#   profile (str):
+#     The profile name. If omitted, "default" is applied.
+#
+# Output: URL to click if the profile is indeed SSO or a role
 ############################################################################
-role=
-role_alias=
+main() {
+    local p result
 
-[ $# -gt 0 ] || set -- "${default_role}"
+    [ $# -gt 0 ] || set -- "default"
+    p="${1}"; shift
+    [ $# -eq 0 ] || usage
 
-role="${1}"; shift
-
-[ $# -eq 0 ] || usage
-
-if [ -n "${role}" ]; then
-    var="role_${role//-/_}"
-    if [ "${!var:+x}" = x -o "${var}" = "role_user" ]; then
-        role_alias="${role%%-visitor}"
-        role="${!var}"
-    fi
-fi
-
-if [ "${role/:role}" != "${role}" ]; then
-    url='https://signin.aws.amazon.com/switchrole?account='
-    url="${url}$( cut -d: -f5 <<<"${role}" )&roleName="
-    url="${url}$( cut -d/ -f2 <<<"${role}" )"
-    if [ -n "${role_alias}" ]; then
-        dn="$(tr A-Z a-z <<<"${role_alias}")"
-        if [ ${#dn} -le 3 ]; then
-            dn="$(tr a-z A-Z <<<"${dn}")"
-        else
-            dn="$(tr a-z A-Z <<<"${dn:0:1}")${dn:1}"
+    result="$( sso_url "${p}" || role_url "${p}" || true )"
+    if [ -n "${result}" ]; then
+        echo "${result#*:}"
+    else
+        # Try sso start url
+        result="$( config_value "[sso-session ${p}]" sso_start_url || true )"
+        if [ -n "${result}" ]; then
+            echo "${result}"
         fi
-        url="${url}&displayName=${dn}"
     fi
-    echo "${url}"
-fi
+}
 
+
+main "$@"
 # vim: nowrap
