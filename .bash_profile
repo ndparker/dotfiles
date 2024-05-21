@@ -111,7 +111,7 @@ prompt_command() {
 PROMPT_COMMAND=prompt_command
 PROMPT_DIRTRIM=3
 
-alias grb='git fetch && git rebase origin/master'
+alias grb='git fetch && git rebase origin/$( LC_ALL=C git remote show origin | sed -n "/HEAD branch/s/.*: //p" )'
 alias gst='git status -sb'
 alias gbr='git --no-pager branch'
 
