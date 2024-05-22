@@ -98,8 +98,11 @@ main() {
             fi
         fi
 
-        echo "${result}"
+        echo
+        echo "Account: ${account}"
+        echo "Role: ${role}"
         [ -z "${profile}" ] || echo "Profile: ${profile}"
+        echo "${result}"
     fi
 }
 

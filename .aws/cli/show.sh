@@ -40,18 +40,30 @@ usage() {
 #
 # Emit console URL for the specified role / SSO login.
 #
-# If no valid credentials are found, the error message is emitted to STDERR
-#
 # Input:
 #   profile (str):
-#     The profile name. If omitted, "default" is applied.
+#     The profile name. If omitted a list of profiles to query is shown.
 #
 # Output: URL to click if the profile is indeed SSO or a role
 ############################################################################
 main() {
     local p result
 
-    [ $# -gt 0 ] || set -- "default"
+    # Shortcut. No profile given -> list them all
+    if [ $# -eq 0 ]; then
+        config_sections | while read result; do
+            if [ "${result#[profile }" != "${result}" ]; then
+                p="${result##[profile }"
+                echo "Profile: ${p%]}"
+            elif [ "${result#[sso-session }" != "${result}" ]; then
+                p="${result##[sso-session }"
+                echo "SSO: ${p%]}"
+            fi
+        done | sort
+
+        return 0
+    fi
+
     p="${1}"; shift
     [ $# -eq 0 ] || usage
 
