@@ -25,3 +25,4 @@
     uncommit = reset HEAD~
     empty = commit --allow-empty
     pr = !"_foo() { git fetch origin pull/\"${1}\"/head:\"${2:-pr${1}}\" && git checkout \"${2:-pr${1}}\"; }; _foo"
+    hub = !"_foo() { local x=\"$(git remote get-url origin)\"; echo \"${x}\" | grep -qF 'github.com' || return 0; x=\"${x%.git}\"; x=\"$( echo \"${x}\" | sed -e 's,git@github\\.com:,https://github.com/,' )\"; echo \"${x}\"; [ \"${x#https://}\" != \"${x}\" ] || return 0; xdg-open \"${x}\" >/dev/null; }; _foo"
