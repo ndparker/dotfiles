@@ -15,20 +15,21 @@ cfox() {
     curl -- "${1}" | pipefox
 }
 alias htype="locate --regex '\\.c$' | shuf | head -1 | xargs pv -q -L 20"
-ccache="/usr/lib/ccache/bin:"
-PATH="~/bin:${PATH}"
-old_IFS="$IFS"; IFS=":"; newpath=
+ccache="/usr/lib/ccache/bin"
+PATH="~/bin:~/.dotnet/tools:${PATH}"
+old_IFS="$IFS"; IFS=":"; newpath=":"
 for i in $PATH; do
-    if [ "$i" = "$ccache" ]; then
-        ccache=
+    [ "$i" != "$ccache" ] || continue
+
+    if [ "${i#\~/}" != "${i}" ]; then
+        i="${HOME}/${i#\~/}"
+        [ -d "${i}" ] || continue
     fi
-    if [ "$i" = "~/bin" ]; then
-        i="${HOME}/bin"
-    fi
-    newpath="${newpath:+${newpath}:}${i}"
+    [ "${newpath}" = "${newpath//:${i}:}" ] || continue
+    newpath="${newpath}${i}:"
 done
 IFS="$old_IFS"
-PATH="${ccache}${newpath}"
+PATH="${ccache}${newpath%:}"
 export PATH
 unset newpath
 unset ccache
