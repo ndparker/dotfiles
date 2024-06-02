@@ -1,0 +1,47 @@
+#!/bin/bash
+set -eu
+
+host="$(uname -n)"
+mkdir -p ~/backup/"${host}"
+chmod 700 ~/backup/"${host}"
+
+cp -p ~/.bash_history ~/backup/"${host}"/.bash_history."$(date +%Y-%m-%d-%H%M%S)"
+sync=(
+    accounts
+    .aws
+    .bash_history
+    .bash_profile
+    .bash_profile_private
+    .config
+    .dbvis
+    .dotnet
+    .emailproxy
+    .fonts
+    .git
+    .gitconfig
+    .gitconfig-ndparker
+    .gitconfig-work
+    .gnupg
+    .gtkrc-2.0
+    .gvimrc
+    .java
+    .local
+    .mozilla
+    .openvpn
+    .password-store
+    .sane
+    .spamprobe
+    .ssh
+    .subversion
+    .vim
+    .vimrc
+)
+for file in "${sync[@]}"; do
+    if [ -d ~/"${file}" ]; then
+        scopy ~/"${file}" ~/backup/"${host}"/"${file}"
+    elif [ -f ~/"${file}" ]; then
+        cp -va ~/"${file}" ~/backup/"${host}"/"${file}"
+    fi
+done
+
+# the end.
