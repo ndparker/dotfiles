@@ -321,11 +321,13 @@ user_login() {
 # Output: logged-in ARN
 ############################################################################
 sso_login() {
+    local profile="${1:-default}"
+
     creds_remove_default
 
     arn="$(aws sts get-caller-identity --query 'Arn' --output text 2>/dev/null)"
     if [ -z "${arn}" ] ; then
-        aws sso login >&2
+        aws --profile "${profile}" sso login >&2
         arn="$(aws sts get-caller-identity --query 'Arn' --output text 2>/dev/null)"
     fi
     echo "${arn}"
@@ -419,7 +421,7 @@ main() {
 
         case "${p}" in
         sso:*)
-            arn="$( sso_login )"
+            arn="$( sso_login "${source_profile}" )"
             ;;
 
         user:*)
