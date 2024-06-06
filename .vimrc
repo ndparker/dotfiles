@@ -108,6 +108,9 @@ autocmd FileType yaml setlocal fdc=1
 autocmd FileType yaml setlocal foldmethod=indent
 autocmd FileType yaml setlocal foldminlines=0
 
+autocmd FileType terraform setlocal tw=0
+autocmd FileType terraform setlocal nowrap
+
 nmap <F3> :lnext<CR>
 nmap <F5> :wa<CR>:!venvexec.sh % nosetests -vv --with-doctest %<CR>
 nmap <F6> :wa<CR>:!venvexec.sh % py.test -vv --exitfirst --doctest-modules %<CR>
