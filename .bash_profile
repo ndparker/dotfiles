@@ -111,7 +111,17 @@ prompt_command() {
 PROMPT_COMMAND=prompt_command
 PROMPT_DIRTRIM=3
 
-alias grb='git fetch && git rebase origin/$( LC_ALL=C git remote show origin | sed -n "/HEAD branch/s/.*: //p" )'
+grb() {
+    local cmd
+
+    git fetch
+    cmd=(
+        git rebase
+        origin/$( LC_ALL=C git remote show origin | sed -n "/HEAD branch/s/.*: //p" )
+    )
+    echo "$(c white bold)${cmd[*]}$(c reset)"
+    "${cmd[@]}"
+}
 alias gst='git status -sb'
 alias gbr='git --no-pager branch'
 
@@ -138,46 +148,6 @@ gc() {
 alias fab="venvexec.sh ./ fab"
 alias inv="venvexec.sh ./ inv"
 
-BOWERBIN="$(which bower 2>/dev/null)"
-bower() {
-(
-    olddir="$(pwd)"
-    while [ ! -f bower.json ]; do
-        [ "$(pwd)" = '/' ] && break
-        cd ..
-    done
-    if [ -f bower.json ]; then
-        if [ "${olddir}" != "$(pwd)" ]; then
-            echo "$(c white bold)>>> $(pwd)$(c reset)" >&2
-        fi
-        "${BOWERBIN}" "$@"
-    else
-        echo "No bower.json found" >&2
-        return 1
-    fi
-)
-}
-
-GRUNTBIN="$(which grunt 2>/dev/null)"
-grunt() {
-(
-    olddir="$(pwd)"
-    while [ ! -f Gruntfile.coffee ]; do
-        [ "$(pwd)" = '/' ] && break
-        cd ..
-    done
-    if [ -f Gruntfile.coffee ]; then
-        if [ "${olddir}" != "$(pwd)" ]; then
-            echo "$(c white bold)>>> $(pwd)$(c reset)" >&2
-        fi
-        venvexec.sh ./ "${GRUNTBIN}" "$@"
-    else
-        echo "No Gruntfile.coffee found" >&2
-        return 1
-    fi
-)
-}
-
 _venv_wrapper="$(
     wrappers=(
         /usr/bin/virtualenvwrapper.sh
@@ -195,6 +165,8 @@ if [ -n "${_venv_wrapper}" ]; then
     . "${_venv_wrapper}"
 
     alias venv='. "$(venvexec.sh . /bin/sh -c '\''echo "${VIRTUAL_ENV}"'\'')/bin/activate"'
+
+    # virtualenv aliases
     eval "$(
         lsvirtualenv -b | while read file; do \
             echo "alias ${file}='t "${file}" && workon "${file}"'"; \
@@ -205,6 +177,46 @@ fi
 [ -r ~/.bash_profile_private ] && . ~/.bash_profile_private
 
 
+# Directory aliases
+eval "$(
+    for base in "${project_bases[@]}"; do \
+        ( \
+            ls -1fF -- "${base}" | grep '[@/]' | while read file; do \
+                case "${file}" in ./|../) continue ;; *@) \
+                    x="$( readlink -- "${base}/${file%?}" )"; \
+                    [ "${x/\/}" = "${x}" ] || continue ;; \
+                esac; \
+                x="${file%?}"; \
+                echo "alias ${x}='t "${x}" && cd "${base}/${x}"'"; \
+            done; \
+        ) \
+    done \
+)"
+
+# Quick checkout
+co() {(
+    set -eu
+
+    name="${1:-}"
+    if [ -z "${name}" ]; then
+        exit 1
+    fi
+    owner="${default_project_owner}"
+
+    cd "${default_project_base}"
+    git clone "git@github.com:${owner}/${name}.git" "${name}".new
+
+    pushd ~/
+    rmvirtualenv "${name}"
+    popd
+
+    rm -f -- "${name}"
+    mv -v -- "${name}".new "${name}"
+
+    cd "${name}"
+)}
+
+# Python-versioned checkouts and venvs
 _project() {(
     py="python${1}"
     name="${2}"
@@ -258,4 +270,8 @@ project311() {
 
 project312() {
     _project 3.12 "${1}" "${2:-${default_project_owner}}" "${3:-${default_project_base}}"
+}
+
+project313() {
+    _project 3.13 "${1}" "${2:-${default_project_owner}}" "${3:-${default_project_base}}"
 }
