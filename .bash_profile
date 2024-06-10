@@ -206,6 +206,8 @@ co() {(
     cd "${default_project_base}"
     git clone "git@github.com:${owner}/${name}.git" "${name}".new
 
+    VIRTUAL_ENV=
+
     pushd ~/
     rmvirtualenv "${name}"
     popd
