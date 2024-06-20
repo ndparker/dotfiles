@@ -230,15 +230,19 @@ _project() {(
     mkvirtualenv --python "${py}" "${name}"
     workon "${name}"
     pip install --upgrade pip
-    cd "$VIRTUAL_ENV"
-    git clone "git@github.com:${owner}/${name}.git" "src/${name}"
-    pdir="$(pwd)"
+
+    cd "${dir}"
+    git clone "git@github.com:${owner}/${name}.git" "${name}.cloned"
+    mkdir -p -- "${VIRTUAL_ENV}/src"
+    mv -v -- "${name}.cloned" "${VIRTUAL_ENV}"/src/"${name}"
     (
+        pdir="$( cd "${VIRTUAL_ENV}" && pwd )"
         cd "${dir}"
         ln -s "${pdir}"
     )
-    cd "src/${name}"
-    echo 'cd "$VIRTUAL_ENV"/src/'"${name}" >> "$VIRTUAL_ENV"/bin/postactivate
+    echo "cd '${dir}/${name}/src/${name}'" >> "${VIRTUAL_ENV}"/bin/postactivate
+
+    workon "${name}"
     pip install -r development.txt
 )}
 
