@@ -8,6 +8,7 @@ chmod 700 ~/backup/"${host}"
 cp -p ~/.bash_history ~/backup/"${host}"/.bash_history."$(date +%Y-%m-%d-%H%M%S)"
 sync=(
     accounts
+    snap
     .aws
     .bash_history
     .bash_profile
