@@ -40,6 +40,9 @@ export GPG_TTY=`tty`
 export PIP_RETRIES=20
 export PIP_TIMEOUT=60
 
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+export SAM_CLI_TELEMETRY=0
+
 umask 022
 
 declare -A colors=(
