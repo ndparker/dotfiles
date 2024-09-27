@@ -1,6 +1,6 @@
 [include]
     path = ~/.gitconfig-ndparker
-[includeIf "gitdir:~/work/"]
+[include]
     path = ~/.gitconfig-work
 [push]
     default = simple
