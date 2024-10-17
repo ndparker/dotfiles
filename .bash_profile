@@ -9,6 +9,7 @@ dice() {
 
 alias g=gvim
 alias k=kubectl
+alias idea=intellij-idea-ultimate
 alias pipefox='firefox "data:text/html;base64,$(base64 -w 0 <&0)"'
 cfox() {
     curl -- "${1}" | pipefox
