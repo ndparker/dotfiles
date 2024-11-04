@@ -22,9 +22,12 @@ if [ "${DEBUG:-}" = "true" ]; then
 fi
 
 
-list_stacks () {
-    local stack parent
+_cftree_list_stacks () {
+    local region stack parent
     local status
+
+    region="${1}"
+    shift
 
     status=(
         CREATE_COMPLETE
@@ -42,6 +45,7 @@ list_stacks () {
     )
 
     aws cloudformation list-stacks \
+        --region "${region}" \
         --stack-status-filter "${status[@]}" \
         --query 'StackSummaries[*].[StackId,ParentId]' \
         --output text \
@@ -51,11 +55,17 @@ list_stacks () {
     done
 }
 
-main() {
-    local wanted="${1:-}"
+cftree_show() {
+    local region
+    local wanted
     local stack parent
     local all_stacks top_level
     local shift="  "
+
+    region="${1}"
+    shift
+
+    wanted="${1:-}"
 
     nested() {
         local wanted="${1}"
@@ -80,7 +90,7 @@ main() {
                 top_level=( "${top_level[@]}" "${stack}" )
             fi
         fi
-    done < <( list_stacks )
+    done < <( _cftree_list_stacks "${region}" )
 
     for stack in "${top_level[@]}"; do
         echo "$(tput bold)$(cut -d/ -f2 <<<"${stack}")$(tput sgr0)"
@@ -96,6 +106,4 @@ main() {
     # done
 }
 
-
-main "$@"
 # vim: nowrap
