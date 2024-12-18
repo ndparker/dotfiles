@@ -16,6 +16,7 @@
 
 [alias]
     co = checkout
+    pick = cherry-pick
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen%cr%Creset %Cblue[%ar]%Creset %C(bold blue)<%an>%Creset' --color --abbrev-commit
     ln = log --graph --pretty=format:'%h -%d% %s [%ar] <%an>' --no-color --abbrev-commit
     diff = diff --minimal
