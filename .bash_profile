@@ -9,7 +9,7 @@ dice() {
 
 alias g=gvim
 alias k=kubectl
-alias idea=idea-ultimate
+alias idea="$(which idea-ultimate || which intellij-idea-ultimate || /bin/false)"
 alias pipefox='firefox "data:text/html;base64,$(base64 -w 0 <&0)"'
 cfox() {
     curl -- "${1}" | pipefox
