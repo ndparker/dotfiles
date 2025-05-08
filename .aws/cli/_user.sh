@@ -16,6 +16,7 @@
 
 . "$(dirname -- "${BASH_SOURCE}")/_config.sh"
 
+user_prefix="${user_prefix:-user__}"
 
 ############################################################################
 # user_profile <profile>
@@ -36,7 +37,7 @@ user_profile() {
 
     key="$(
         config_value "[profile ${profile}]" "aws_access_key_id" \
-        || config_value "[profile user@${profile}]" "aws_access_key_id" \
+        || config_value "[profile ${user_prefix}${profile}]" "aws_access_key_id" \
     )"
     [ -n "${key}" ] || return 1
 
