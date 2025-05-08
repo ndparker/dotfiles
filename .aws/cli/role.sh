@@ -246,11 +246,11 @@ user_login() {
 
     # Build command for getting the session token
     # -------------------------------------------
-    cmd=( aws --profile "user@${profile}" sts get-session-token )
+    cmd=( aws --profile "${user_prefix}${profile}" sts get-session-token )
     if [ -n "${token}" ]; then
         # MFA serial is derived from user ARN
         iam="$(
-            aws --profile "user@${profile}" \
+            aws --profile "${user_prefix}${profile}" \
             sts get-caller-identity --query 'Arn' --output text 2>/dev/null
         )"
         mfa_arn="${iam/:user\//:mfa/}"
