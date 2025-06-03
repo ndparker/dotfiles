@@ -107,6 +107,8 @@ let c_no_comment_fold=1
 autocmd FileType yaml setlocal fdc=1
 autocmd FileType yaml setlocal foldmethod=indent
 autocmd FileType yaml setlocal foldminlines=0
+autocmd FileType yaml setlocal tw=0
+autocmd FileType yaml setlocal nowrap
 
 autocmd FileType terraform setlocal tw=0
 autocmd FileType terraform setlocal nowrap
