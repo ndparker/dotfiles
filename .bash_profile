@@ -36,6 +36,11 @@ unset ccache
 unset old_IFS
 unset i
 
+if [ -z "${LESS:-}" ]; then
+    export LESS='-R -M --shift 5 --tabs 4 -c -i'
+    export LESSOPEN='|lesspipe %s'
+fi
+
 export GPG_TTY=`tty`
 
 export PIP_RETRIES=20
