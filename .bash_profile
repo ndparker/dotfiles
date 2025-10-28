@@ -16,6 +16,7 @@ cfox() {
 }
 alias htype="locate --regex '\\.c$' | shuf | head -1 | xargs pv -q -L 20"
 ccache="/usr/lib/ccache/bin"
+export PATH="~/.local/bin:{$PATH}"
 PATH="~/bin:~/.dotnet/tools:${PATH}"
 old_IFS="$IFS"; IFS=":"; newpath=":"
 for i in $PATH; do
