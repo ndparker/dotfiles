@@ -16,7 +16,7 @@ sync=(
     .bash_profile_private
     .config
     .dbvis
-    .dotnet
+    .documents
     .emailproxy
     .fonts
     .git
