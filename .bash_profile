@@ -49,6 +49,7 @@ export PIP_TIMEOUT=60
 
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 export SAM_CLI_TELEMETRY=0
+export AWS_PAGER=
 
 umask 022
 
